@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YeeLux</title>
+    <!-- Use system native fonts -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4">
+</head>
+
+<body>
+    <!-- Floating Language Segmented Control -->
+    <div class="global-actions">
+        <div class="lang-segmented-control" id="langToggle">
+            <div class="lang-option" data-lang="zh">中文</div>
+            <div class="lang-option" data-lang="en">EN</div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar-toc">
+            <ul class="timeline-toc">
+                {% for device in devices %}
+                <li class="toc-item" data-target="device-{{ device.id }}">
+                    <div class="toc-node"></div>
+                    <div class="toc-name">{{ device.name }}</div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="apple-dashboard">
+
+            {% for device in devices %}
+            <div class="apple-card device-group" id="device-{{ device.id }}" data-device-id="{{ device.id }}">
+            <!-- Header: icon, title, switch -->
+            <div class="card-header">
+                <div class="header-left">
+                    <div class="icon-box light-icon">
+                        <!-- MDI Lightbulb Icon -->
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12,2A7,7 0 0,0 5,9C5,11.38 6.19,13.47 8,14.74V17A1,1 0 0,0 9,18H15A1,1 0 0,0 16,17V14.74C17.81,13.47 19,11.38 19,9A7,7 0 0,0 12,2M9,21A1,1 0 0,0 10,22H14A1,1 0 0,0 15,21V20H9V21Z" />
+                        </svg>
+                    </div>
+                    <div class="entity-info">
+                        <div class="entity-name">{{ device.name }}</div>
+                        <div class="entity-state connection-status" data-i18n="connecting">Connecting...</div>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <!-- iOS style Toggle Switch -->
+                    <label class="apple-switch">
+                        <input type="checkbox" class="toggle-btn">
+                        <span class="switch-track"></span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Sliders: Brightness and Color Temp -->
+            <div class="sliders-section">
+                <div class="slider-row">
+                    <div class="slider-icon">
+                        <!-- MDI Brightness Icon -->
+                        <svg viewBox="0 0 24 24">
+                            <path
+                                d="M12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18M20,15.31L23.31,12L20,8.69V4H15.31L12,0.69L8.69,4H4V8.69L0.69,12L4,15.31V20H8.69L12,23.31L15.31,20H20V15.31Z" />
+                        </svg>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" class="brightness-slider apple-slider" min="1" max="100" value="50">
+                    </div>
+                    <div class="slider-value brightness-val">--%</div>
+                </div>
+
+                <div class="slider-row">
+                    <div class="slider-icon">
+                        <!-- MDI Circle Half Full (Color Temp) Icon -->
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2M12 4A8 8 0 0 1 20 12A8 8 0 0 1 12 20V4Z" />
+                        </svg>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" class="ct-slider apple-slider ct-gradient" min="2600" max="5000"
+                            value="4000">
+                    </div>
+                    <div class="slider-value ct-val">--K</div>
+                </div>
+            </div>
+
+            <hr class="card-divider">
+
+            <!-- Focus Mode -->
+            <div class="automation-section">
+                <div class="automation-header">
+                    <div class="header-left">
+                        <div class="icon-box" style="width: 32px; height: 32px; border-radius: 8px;">
+                            <!-- MDI Timer Outline Icon (iOS style timer) -->
+                            <svg viewBox="0 0 24 24" style="width: 18px; height: 18px;">
+                                <path d="M12,20A7,7 0 0,1 5,13A7,7 0 0,1 12,6A7,7 0 0,1 19,13A7,7 0 0,1 12,20M19.03,7.39L20.45,5.97C20,5.46 19.55,5 19.04,4.56L17.62,6C16.07,4.74 14.12,4 12,4C7.03,4 3,8.03 3,13C3,17.97 7.03,22 12,22C16.97,22 21,17.97 21,13C21,10.88 20.26,8.93 19.03,7.39M11,14H13V8H11M15,1H9V3H15V1Z" />
+                            </svg>
+                        </div>
+                        <div class="entity-info">
+                            <div class="entity-name" style="font-size: 15px;" data-i18n="focus_mode">Focus Mode</div>
+                            <div class="entity-state focus-status" data-i18n="inactive">Inactive</div>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <button class="apple-btn start-btn focus-toggle-btn" data-i18n="start">Start</button>
+                    </div>
+                </div>
+                <div class="automation-content focus-config">
+                    <div class="input-row">
+                        <label data-i18n="work_mins">Work (mins)</label>
+                        <input type="number" class="focus-work-input apple-input" value="45" min="1" max="120">
+                    </div>
+                    <div class="input-row">
+                        <label data-i18n="rest_mins">Rest (mins)</label>
+                        <input type="number" class="focus-rest-input apple-input" value="10" min="1" max="60">
+                    </div>
+                </div>
+            </div>
+
+            <hr class="card-divider">
+
+            <!-- Sleep Timer -->
+            <div class="automation-section">
+                <div class="automation-header">
+                    <div class="header-left">
+                        <div class="icon-box" style="width: 32px; height: 32px; border-radius: 8px;">
+                            <!-- MDI Moon Waning Crescent Icon (Apple DND) -->
+                            <svg viewBox="0 0 24 24" style="width: 18px; height: 18px;">
+                                <path d="M12 2A9.91 9.91 0 0 0 9 2.46A10 10 0 0 1 9 21.54A10 10 0 1 0 12 2Z" />
+                            </svg>
+                        </div>
+                        <div class="entity-info">
+                            <div class="entity-name" style="font-size: 15px;" data-i18n="sleep_timer">Sleep Timer</div>
+                            <div class="entity-state timer-status" data-i18n="inactive">Inactive</div>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <button class="apple-btn start-btn timer-toggle-btn" data-i18n="start">Start</button>
+                    </div>
+                </div>
+                <div class="automation-content timer-config">
+                    <div class="input-row">
+                        <label data-i18n="timer_mins">Timer (mins)</label>
+                        <input type="number" class="timer-input apple-input" value="15" min="1" max="120">
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}?v=4"></script>
+</body>
+
+</html>

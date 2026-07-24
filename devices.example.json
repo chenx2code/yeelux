@@ -1,0 +1,20 @@
+[
+    {
+        "id": "lamp_1",
+        "name": "My Smart Desk Lamp",
+        "ip": "192.168.1.X",
+        "token": "your_token_here"
+    },
+    {
+        "id": "lamp_2",
+        "name": "Bedroom Ceiling Light",
+        "ip": "192.168.1.Y",
+        "token": "your_token_here"
+    },
+    {
+        "id": "lamp_3",
+        "name": "Living Room Floor Lamp",
+        "ip": "192.168.1.Z",
+        "token": "your_token_here"
+    }
+]
