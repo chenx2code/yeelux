@@ -326,8 +326,6 @@ input:checked+.switch-track:before {
 .sliders-section {
     display: flex;
     flex-direction: column;
-    gap: 0;
-    padding: 0;
 }
 
 .slider-row {
@@ -467,16 +465,19 @@ input:checked+.switch-track:before {
 
 .apple-input {
     width: 52px;
+    height: 28px;
+    box-sizing: border-box;
     background-color: rgba(118, 118, 128, 0.12);
     border: none;
     border-radius: 6px;
     color: var(--text-primary);
     font-size: 15px;
     text-align: center;
-    padding: 4px 0;
+    padding: 0;
     outline: none;
     font-variant-numeric: tabular-nums;
     -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 .apple-input::-webkit-outer-spin-button,
@@ -522,8 +523,11 @@ input:checked+.switch-track:before {
     display: flex;
     background: rgba(118, 118, 128, 0.12);
     border-radius: 8px;
-    padding: 2px;
+    padding: 3px;
     cursor: pointer;
+    height: 28px;
+    box-sizing: border-box;
+    align-items: center;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -533,7 +537,13 @@ input:checked+.switch-track:before {
 }
 
 .rest-option {
-    padding: 4px 16px;
+    width: 49px;
+    height: 22px;
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 14px;
     font-weight: 500;
     color: var(--text-primary);
@@ -557,18 +567,15 @@ input:checked+.switch-track:before {
 .rest-dim-options {
     display: flex;
     flex-direction: column;
-    gap: 0;
     transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-top 0.3s ease;
     max-height: 200px;
     opacity: 1;
     overflow: hidden;
-    padding: 0;
 }
 
 .rest-dim-options.hidden {
     max-height: 0;
     opacity: 0;
-    margin-top: -12px;
 }
 
 /* Settings Toggle Button */
@@ -611,8 +618,6 @@ input:checked+.switch-track:before {
     max-height: 400px;
     opacity: 1;
     margin-top: -6px;
-    padding-bottom: 0;
-    margin-bottom: 0;
 }
 
 /* Disabled Panel State (when running) */
