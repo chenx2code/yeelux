@@ -1,9 +1,28 @@
+# Environments
 venv/
+.venv/
+env/
+ENV/
+.env
+
+# Python Cache
 __pycache__/
 *.pyc
-.env
-.DS_Store
+*.pyo
+
+# IDEs and Tools
 .idea/
 .vscode/
 .agents/
+
+# OS Files
+.DS_Store
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+
+# Local Configurations
 devices.json
