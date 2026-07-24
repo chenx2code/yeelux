@@ -18,8 +18,13 @@ const translations = {
         rest_mins: "Rest (mins)",
         timer_mins: "Timer (mins)",
         turns_off_in: "Turns off in {time}",
-        working: "💪 Working",
-        resting: "☕ Resting"
+        working: "Working",
+        resting: "Resting",
+        rest_light: "Rest Light",
+        dim: "Dim",
+        turn_off: "Off",
+        rest_brightness: "Brightness",
+        rest_color_temp: "Color Temp"
     },
     zh: {
         connecting: "正在连接...",
@@ -35,8 +40,13 @@ const translations = {
         rest_mins: "休息 (分钟)",
         timer_mins: "关闭倒计时 (分钟)",
         turns_off_in: "将在 {time} 后关闭",
-        working: "💪 工作中",
-        resting: "☕ 休息中"
+        working: "工作中",
+        resting: "休息中",
+        rest_light: "休息灯光",
+        dim: "调暗",
+        turn_off: "关灯",
+        rest_brightness: "亮度",
+        rest_color_temp: "色温"
     }
 };
 
@@ -281,6 +291,40 @@ deviceGroups.forEach(group => {
     const focusWorkInput = group.querySelector('.focus-work-input');
     const focusRestInput = group.querySelector('.focus-rest-input');
     const focusStatus = group.querySelector('.focus-status');
+    const restOptions = group.querySelectorAll('.rest-option');
+    const restDimOptions = group.querySelector('.rest-dim-options');
+    const focusBrightnessInput = group.querySelector('.focus-brightness-input');
+    const focusCtInput = group.querySelector('.focus-ct-input');
+    const focusBrightnessVal = group.querySelector('.focus-brightness-val');
+    const focusCtVal = group.querySelector('.focus-ct-val');
+
+    if (focusBrightnessInput && focusBrightnessVal) {
+        focusBrightnessInput.addEventListener('input', (e) => {
+            focusBrightnessVal.textContent = e.target.value + '%';
+        });
+    }
+    
+    if (focusCtInput && focusCtVal) {
+        focusCtInput.addEventListener('input', (e) => {
+            focusCtVal.textContent = e.target.value + 'K';
+        });
+    }
+    
+    let currentRestAction = 'dim';
+
+    restOptions.forEach(opt => {
+        opt.addEventListener('click', (e) => {
+            if (focusWorkInput.disabled) return; // Prevent changing while running
+            restOptions.forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            currentRestAction = opt.getAttribute('data-action');
+            if (currentRestAction === 'off') {
+                restDimOptions.classList.add('hidden');
+            } else {
+                restDimOptions.classList.remove('hidden');
+            }
+        });
+    });
     focusToggleBtn.addEventListener('click', () => {
         const isStarting = !focusToggleBtn.classList.contains('stop-btn');
         let workMins = parseInt(focusWorkInput.value) || 45;
@@ -294,6 +338,10 @@ deviceGroups.forEach(group => {
             focusStatus.style.color = 'var(--accent-color)';
             focusWorkInput.disabled = true;
             focusRestInput.disabled = true;
+            focusBrightnessInput.disabled = true;
+            focusCtInput.disabled = true;
+            const configPanel = group.querySelector('.focus-config');
+            if (configPanel) configPanel.classList.add('disabled-panel');
         } else {
             focusToggleBtn.textContent = translations[currentLang].start;
             focusToggleBtn.classList.remove('stop-btn');
@@ -301,18 +349,37 @@ deviceGroups.forEach(group => {
             focusStatus.style.color = 'var(--text-secondary)';
             focusWorkInput.disabled = false;
             focusRestInput.disabled = false;
+            focusBrightnessInput.disabled = false;
+            focusCtInput.disabled = false;
+            const configPanel = group.querySelector('.focus-config');
+            if (configPanel) configPanel.classList.remove('disabled-panel');
         }
 
         const body = { action: isStarting ? 'start' : 'stop' };
         if (isStarting) {
             body.work_mins = workMins;
             body.rest_mins = restMins;
+            body.rest_action = currentRestAction;
+            body.rest_brightness = parseInt(focusBrightnessInput.value) || 5;
+            body.rest_color_temp = parseInt(focusCtInput.value) || 2700;
         }
         fetch(`/api/focus/${deviceId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         }).then(() => fetchAutomations());
+    });
+    
+    // Settings Toggle Bindings
+    const settingsBtns = group.querySelectorAll('.settings-toggle-btn');
+    settingsBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.classList.toggle('active');
+            const content = btn.closest('.automation-section').querySelector('.hidden-content');
+            if (content) {
+                content.classList.toggle('expanded');
+            }
+        });
     });
 });
 
@@ -347,6 +414,8 @@ async function fetchAutomations() {
                 timerToggleBtn.textContent = translations[currentLang].cancel;
                 timerToggleBtn.classList.add('stop-btn');
                 timerInput.disabled = true;
+                const configPanel = group.querySelector('.timer-config');
+                if (configPanel) configPanel.classList.add('disabled-panel');
             } else {
                 localState[deviceId].timerActive = false;
                 timerStatus.textContent = translations[currentLang].inactive;
@@ -354,6 +423,8 @@ async function fetchAutomations() {
                 timerToggleBtn.textContent = translations[currentLang].start;
                 timerToggleBtn.classList.remove('stop-btn');
                 timerInput.disabled = false;
+                const configPanel = group.querySelector('.timer-config');
+                if (configPanel) configPanel.classList.remove('disabled-panel');
             }
 
             // Fetch Focus
@@ -363,6 +434,8 @@ async function fetchAutomations() {
             const focusToggleBtn = group.querySelector('.focus-toggle-btn');
             const focusWorkInput = group.querySelector('.focus-work-input');
             const focusRestInput = group.querySelector('.focus-rest-input');
+            const focusBrightnessInput = group.querySelector('.focus-brightness-input');
+            const focusCtInput = group.querySelector('.focus-ct-input');
 
             if (fData.active) {
                 localState[deviceId].focusActive = true;
@@ -375,6 +448,10 @@ async function fetchAutomations() {
                 focusToggleBtn.classList.add('stop-btn');
                 focusWorkInput.disabled = true;
                 focusRestInput.disabled = true;
+                focusBrightnessInput.disabled = true;
+                focusCtInput.disabled = true;
+                const configPanel = group.querySelector('.focus-config');
+                if (configPanel) configPanel.classList.add('disabled-panel');
             } else {
                 localState[deviceId].focusActive = false;
                 focusStatus.textContent = translations[currentLang].inactive;
@@ -383,6 +460,10 @@ async function fetchAutomations() {
                 focusToggleBtn.classList.remove('stop-btn');
                 focusWorkInput.disabled = false;
                 focusRestInput.disabled = false;
+                focusBrightnessInput.disabled = false;
+                focusCtInput.disabled = false;
+                const configPanel = group.querySelector('.focus-config');
+                if (configPanel) configPanel.classList.remove('disabled-panel');
             }
         } catch(e) {
             console.error("Failed to fetch automations for", deviceId, e);

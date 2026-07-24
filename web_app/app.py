@@ -125,7 +125,10 @@ def handle_focus(device_id):
         if data.get('action') == 'start':
             work_mins = int(data.get('work_mins', 45))
             rest_mins = int(data.get('rest_mins', 10))
-            scheduler.start_focus(work_mins, rest_mins)
+            rest_action = data.get('rest_action', 'dim')
+            rest_brightness = int(data.get('rest_brightness', 5))
+            rest_color_temp = int(data.get('rest_color_temp', 2700))
+            scheduler.start_focus(work_mins, rest_mins, rest_action, rest_brightness, rest_color_temp)
         elif data.get('action') == 'stop':
             scheduler.stop_focus()
         return jsonify({'success': True})

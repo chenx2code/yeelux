@@ -18,6 +18,9 @@ class LightScheduler:
         self.focus_rest_duration = 10 * 60  # seconds
         self.focus_saved_brightness = 50
         self.focus_saved_ct = 4000
+        self.focus_rest_action = 'dim'
+        self.focus_rest_brightness = 5
+        self.focus_rest_color_temp = 2700
         
         # Start daemon thread
         self.thread = threading.Thread(target=self._loop, daemon=True)
@@ -40,7 +43,7 @@ class LightScheduler:
             return {'active': False, 'remaining_seconds': 0}
         return {'active': True, 'remaining_seconds': rem}
 
-    def start_focus(self, work_mins=45, rest_mins=10):
+    def start_focus(self, work_mins=45, rest_mins=10, rest_action='dim', rest_brightness=5, rest_color_temp=2700):
         # Save current light state before starting focus
         status = self.light.get_status()
         if status:
@@ -51,6 +54,9 @@ class LightScheduler:
         
         self.focus_work_duration = work_mins * 60
         self.focus_rest_duration = rest_mins * 60
+        self.focus_rest_action = rest_action
+        self.focus_rest_brightness = rest_brightness
+        self.focus_rest_color_temp = rest_color_temp
         
         self.focus_active = True
         self.focus_state = 'working'
@@ -71,7 +77,10 @@ class LightScheduler:
             'state': self.focus_state,
             'remaining_seconds': max(0, rem),
             'work_mins': int(self.focus_work_duration / 60),
-            'rest_mins': int(self.focus_rest_duration / 60)
+            'rest_mins': int(self.focus_rest_duration / 60),
+            'rest_action': self.focus_rest_action,
+            'rest_brightness': self.focus_rest_brightness,
+            'rest_color_temp': self.focus_rest_color_temp
         }
 
     def _loop(self):
@@ -93,9 +102,12 @@ class LightScheduler:
                             logging.info(f"[{self.light.name}] Focus period ended, preparing to rest")
                             self.light.blink(2)
                             time.sleep(1) # wait for blink to finish
-                            # Enter eye-protection rest mode: very warm light, lowest brightness
-                            self.light.set_brightness(1)
-                            self.light.set_color_temp(2600)
+                            # Enter rest mode
+                            if self.focus_rest_action == 'off':
+                                self.light.turn_off()
+                            else:
+                                self.light.set_brightness(self.focus_rest_brightness)
+                                self.light.set_color_temp(self.focus_rest_color_temp)
                             
                             self.focus_state = 'resting'
                             self.focus_end_time = time.time() + self.focus_rest_duration
@@ -106,6 +118,9 @@ class LightScheduler:
                             self.light.blink(2)
                             time.sleep(1)
                             # Restore working brightness and color temperature
+                            if self.focus_rest_action == 'off':
+                                self.light.turn_on()
+                                time.sleep(0.5)
                             self.light.set_brightness(self.focus_saved_brightness)
                             self.light.set_color_temp(self.focus_saved_ct)
                             
