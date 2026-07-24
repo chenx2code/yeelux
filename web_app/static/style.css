@@ -606,18 +606,22 @@ input:checked+.switch-track:before {
 
 /* Hidden Automation Content */
 .hidden-content {
-    max-height: 0;
+    display: grid;
+    grid-template-rows: 0fr;
     opacity: 0;
-    overflow: hidden;
     margin-top: -16px;
     /* pull it up to hide the gap */
-    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-top 0.3s ease;
+    transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin-top 0.3s ease;
 }
 
 .hidden-content.expanded {
-    max-height: 400px;
+    grid-template-rows: 1fr;
     opacity: 1;
     margin-top: -6px;
+}
+
+.hidden-content-inner {
+    overflow: hidden;
 }
 
 /* Disabled Panel State (when running) */
