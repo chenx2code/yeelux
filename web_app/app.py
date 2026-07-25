@@ -141,9 +141,11 @@ def handle_focus(device_id):
 
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
+    is_debug = os.getenv("FLASK_DEBUG", "false").lower() in ["true", "1", "t", "yes"]
+    
     zeroconf_svc = MDNSWatchdog(port)
     try:
-        app.run(host='0.0.0.0', port=port, debug=True)
+        app.run(host='0.0.0.0', port=port, debug=is_debug)
     finally:
         if zeroconf_svc:
             zeroconf_svc.close()
