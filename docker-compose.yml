@@ -1,0 +1,25 @@
+services:
+  yeelux:
+    build: .
+    container_name: yeelux
+    restart: unless-stopped
+    
+    # --- Network Configuration ---
+    
+    # Option 1 (Recommended for Windows/Mac Docker Desktop): 
+    # Port mapping is strictly required for Windows/Mac to expose the web UI correctly.
+    ports:
+      - "5000:5000"
+
+    # Option 2 (Recommended for Linux / NAS / Raspberry Pi): 
+    # If deploying on a native Linux host, it is highly recommended to comment out 
+    # the 'ports' block above and uncomment the 'network_mode' line below.
+    # Host network is required for smart home UDP auto-discovery to work properly.
+    # network_mode: "host"
+    
+    # --------------------------------------------
+
+    volumes:
+      # Ensure you have copied 'devices.example.json' and renamed it to 'devices.json' before running
+      - ./devices.json:/app/devices.json
+      - ./.env:/app/.env

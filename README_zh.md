@@ -48,9 +48,19 @@ pip install -r requirements.txt
 > 按照该项目的官方指引运行提取器，即可自动列出账号下所有智能设备的 IP 和 Token。获取后填入上方的 `devices.json` 文件即可。（注：本项目无内置任何涉及小米云端登录的第三方脚本。）
 
 ### 3. 启动服务 (Run)
+
+**方式一：使用 Python 本地运行**
 ```bash
 python web_app/app.py
 ```
+
+**方式二：使用 Docker 部署 (推荐)**
+本项目支持使用 Docker 一键部署。请确保你的环境中已安装 `docker` 和 `docker compose`，并且已经在根目录下创建好了 `devices.json` 文件。
+```bash
+docker compose up -d
+```
+*(注：如果你的 Docker 运行在真实的 Linux 系统如 NAS/树莓派 上，强烈建议修改 `docker-compose.yml` 启用 `network_mode: "host"`，以支持局域网设备 UDP 自动发现功能。Windows/Mac 用户保持默认配置即可。)*
+
 服务启动后，在你的浏览器中访问 `http://localhost:<PORT>` (或你服务器的局域网 IP:`<PORT>`) 即可开始使用！
 *(注：`<PORT>` 为你在上文 `.env` 中配置的端口号；若未配置，则默认使用 5000 端口。)*
 

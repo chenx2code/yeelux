@@ -49,9 +49,19 @@ This project supports controlling multiple smart lights across your home. Copy `
 > Run the extractor according to the official instructions of that project, and it will automatically list the IP and Token for all smart devices under your account. Once obtained, fill them into the `devices.json` file mentioned above. (Note: This project does not contain any third-party scripts involving Xiaomi cloud logins.)
 
 ### 3. Run the Service
+
+**Method 1: Run locally with Python**
 ```bash
 python web_app/app.py
 ```
+
+**Method 2: Deploy with Docker (Recommended)**
+This project supports one-click deployment using Docker. Ensure you have `docker` and `docker compose` installed, and have created the `devices.json` file in the root directory.
+```bash
+docker compose up -d
+```
+*(Note: If you run Docker on a native Linux system like a NAS or Raspberry Pi, it is highly recommended to modify `docker-compose.yml` to enable `network_mode: "host"` to support UDP auto-discovery. Windows/Mac users should keep the default configuration.)*
+
 After the service starts, access `http://localhost:<PORT>` (or your server's LAN IP:`<PORT>`) in your browser to start using it!
 *(Note: `<PORT>` is the port number you configured in the `.env` file; if not configured, it defaults to port 5000.)*
 
