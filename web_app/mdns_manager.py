@@ -32,6 +32,7 @@ class MDNSWatchdog:
     def __init__(self, port):
         self.port = port
         self.env_name = os.getenv('MDNS_NAME', 'yeelux').strip().lower()
+        self.polling_interval = int(os.getenv('MDNS_POLLING_INTERVAL', 180))
         self.zeroconf_instance = None
         self.current_ip = None
         self.running = False
@@ -74,7 +75,7 @@ class MDNSWatchdog:
                 netlink_socket = None
 
         if not use_passive:
-            print("[INFO] [mDNS] Native event listening unavailable (e.g., Sandbox/Termux). Using 3m Polling Mode.")
+            print(f"[INFO] [mDNS] Native event listening unavailable (e.g., Sandbox/Termux). Using {self.polling_interval}s Polling Mode.")
 
         while self.running:
             if use_passive:
@@ -98,8 +99,8 @@ class MDNSWatchdog:
                 if new_ip != self.current_ip:
                     self._update_mdns(new_ip)
                 
-                # Sleep for 3m (180s) but check self.running every 1s
-                for _ in range(180):
+                # Sleep for configured interval but check self.running every 1s
+                for _ in range(self.polling_interval):
                     if not self.running:
                         break
                     time.sleep(1)

@@ -81,6 +81,7 @@ The mDNS feature perfectly solves this: it automatically broadcasts a fixed doma
   - **If running directly with Python**: No configuration needed. The code automatically broadcasts `yeelux.local` out of the box.
   - **If deploying with Docker**: You **MUST** modify the `docker-compose.yml` file: **comment out the `ports` lines and uncomment `network_mode: "host"`**. This binds the container directly to the host's physical network adapter, transmitting the mDNS broadcast to the entire LAN.
   - *(Advanced)* **If running multiple instances in the same home**: To prevent hostname conflicts, you need to forcefully override the name by adding a line to the respective `.env` file (e.g., `MDNS_NAME=yeelux-bedroom`). The domain for that machine will instantly change to `http://yeelux-bedroom.local:5000`.
+  - *(Advanced)* **Customize mDNS polling interval**: If running in an environment that cannot passively listen to **underlying OS network interface events** (due to permission restrictions like the Android Termux sandbox), the service automatically falls back to active polling for IP changes. It defaults to 180 seconds. You can override this by adding `MDNS_POLLING_INTERVAL=180` in your `.env` file (unit: seconds).
 
 **3. Unsupported Environments and Workarounds**
 - **Unsupported Environments**: Native Windows, native Mac, Windows WSL virtual machines, and Docker Desktop on Windows/Mac. These environments have underlying virtual NAT network isolation, which blocks mDNS multicast packets from reaching the physical LAN.
