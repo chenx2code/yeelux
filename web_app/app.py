@@ -155,18 +155,23 @@ def setup_mdns(port):
 
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # To get the true LAN IP, we connect to the smart lamp's IP.
+        # If not available, we connect to the mDNS multicast address.
+        # This prevents Android from returning a VPN or cellular IP (like 172.x.x.x) for internet routes.
+        device_ip = os.getenv('MI_DEVICE_IP')
+        if device_ip:
+            s.connect((device_ip, 80))
+        else:
+            s.connect(("224.0.0.251", 5353))
+        local_ip = s.getsockname()[0]
+    except Exception:
         try:
             s.connect(("8.8.8.8", 80))
             local_ip = s.getsockname()[0]
         except Exception:
-            try:
-                # Fallback for some restricted Android/Termux environments
-                s.connect(("192.168.1.1", 80))
-                local_ip = s.getsockname()[0]
-            except Exception:
-                local_ip = socket.gethostbyname(socket.gethostname())
-        finally:
-            s.close()
+            local_ip = socket.gethostbyname(socket.gethostname())
+    finally:
+        s.close()
             
         print(f"🔍 [mDNS] Detected local IP for broadcast: {local_ip}")
         if local_ip.startswith("127."):
