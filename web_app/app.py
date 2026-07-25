@@ -4,6 +4,9 @@ import os
 import json
 import logging
 from dotenv import load_dotenv
+import platform
+import socket
+from zeroconf import ServiceInfo, Zeroconf
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from light_controller import LightManager
@@ -135,6 +138,52 @@ def handle_focus(device_id):
     else:
         return jsonify(scheduler.get_focus_status())
 
+def setup_mdns(port):
+    env_name = os.getenv('MDNS_NAME', 'yeelux').strip().lower()
+    if env_name in ['false', 'disabled', '0']:
+        print("💡 [mDNS] Service manually disabled via environment variables.")
+        return None
+
+    if sys.platform == 'win32':
+        print("💡 [mDNS] Native Windows environment detected, disabling mDNS to avoid conflicts.")
+        return None
+    
+    release = platform.uname().release.lower()
+    if 'microsoft' in release or 'wsl' in release:
+        print("💡 [mDNS] WSL virtual network detected, disabling mDNS.")
+        return None
+
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+        except Exception:
+            local_ip = socket.gethostbyname(socket.gethostname())
+        finally:
+            s.close()
+        
+        info = ServiceInfo(
+            "_http._tcp.local.",
+            f"{env_name}._http._tcp.local.",
+            addresses=[socket.inet_aton(local_ip)],
+            port=port,
+            properties={"desc": "Yeelux Smart Lamp Control"},
+            server=f"{env_name}.local.",
+        )
+        zeroconf_instance = Zeroconf()
+        zeroconf_instance.register_service(info)
+        print(f"🚀 [mDNS] Magic broadcast started! Local network access: http://{env_name}.local:{port}")
+        return zeroconf_instance
+    except Exception as e:
+        print(f"⚠️ [mDNS] Failed to start broadcast: {e}")
+        return None
+
 if __name__ == '__main__':
     port = int(os.getenv("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    zeroconf_svc = setup_mdns(port)
+    try:
+        app.run(host='0.0.0.0', port=port, debug=True)
+    finally:
+        if zeroconf_svc:
+            zeroconf_svc.close()
