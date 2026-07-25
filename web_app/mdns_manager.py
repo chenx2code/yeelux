@@ -38,16 +38,16 @@ class MDNSWatchdog:
         self._first_boot = False
         
         if self.env_name in ['false', 'disabled', '0']:
-            print("💡 [mDNS] Service manually disabled via environment variables.")
+            print("[INFO] [mDNS] Service manually disabled via environment variables.")
             return
 
         if sys.platform == 'win32':
-            print("💡 [mDNS] Native Windows environment detected, disabling mDNS to avoid conflicts.")
+            print("[INFO] [mDNS] Native Windows environment detected, disabling mDNS to avoid conflicts.")
             return
         
         release = platform.uname().release.lower()
         if 'microsoft' in release or 'wsl' in release:
-            print("💡 [mDNS] WSL virtual network detected, disabling mDNS.")
+            print("[INFO] [mDNS] WSL virtual network detected, disabling mDNS.")
             return
             
         self.running = True
@@ -67,14 +67,14 @@ class MDNSWatchdog:
                 netlink_socket.bind((0, 0x10))
                 netlink_socket.settimeout(2.0) # Wake up every 2s to check self.running
                 use_passive = True
-                print("💡 [mDNS] Native OS event-driven networking enabled (Passive Mode).")
+                print("[INFO] [mDNS] Native OS event-driven networking enabled (Passive Mode).")
             except Exception:
                 if netlink_socket:
                     netlink_socket.close()
                 netlink_socket = None
 
         if not use_passive:
-            print("💡 [mDNS] Native event listening unavailable (e.g., Sandbox/Termux). Using 3m Polling Mode.")
+            print("[INFO] [mDNS] Native event listening unavailable (e.g., Sandbox/Termux). Using 3m Polling Mode.")
 
         while self.running:
             if use_passive:
@@ -90,7 +90,7 @@ class MDNSWatchdog:
                     # Normal timeout, just lets the loop check self.running
                     continue
                 except Exception as e:
-                    print(f"⚠️ [mDNS] Passive monitor failed ({e}), falling back to Polling Mode.")
+                    print(f"[WARN] [mDNS] Passive monitor failed ({e}), falling back to Polling Mode.")
                     use_passive = False
             else:
                 # Active Polling Fallback
@@ -109,14 +109,14 @@ class MDNSWatchdog:
             
     def _update_mdns(self, new_ip):
         if self.zeroconf_instance:
-            print(f"🔄 [mDNS] IP changed from {self.current_ip} to {new_ip}. Restarting broadcast...")
+            print(f"[INFO] [mDNS] IP changed from {self.current_ip} to {new_ip}. Restarting broadcast...")
             self.zeroconf_instance.close()
             self.zeroconf_instance = None
             
         self.current_ip = new_ip
-        print(f"🔍 [mDNS] Detected local IP for broadcast: {new_ip}")
+        print(f"[INFO] [mDNS] Detected local IP for broadcast: {new_ip}")
         if new_ip.startswith("127."):
-            print("⚠️ [mDNS] Warning: Broadcasting localhost (127.0.0.1). This means other devices might try to connect to themselves!")
+            print("[WARN] [mDNS] Warning: Broadcasting localhost (127.0.0.1). This means other devices might try to connect to themselves!")
             
         try:
             info = ServiceInfo(
@@ -130,10 +130,10 @@ class MDNSWatchdog:
             self.zeroconf_instance = Zeroconf(interfaces=[new_ip])
             self.zeroconf_instance.register_service(info)
             if not self._first_boot:
-                print(f"🚀 [mDNS] Magic broadcast started! Local network access: http://{self.env_name}.local:{self.port}")
+                print(f"[INFO] [mDNS] Magic broadcast started! Local network access: http://{self.env_name}.local:{self.port}")
                 self._first_boot = True
         except Exception as e:
-            print(f"⚠️ [mDNS] Failed to start broadcast: {e}")
+            print(f"[ERROR] [mDNS] Failed to start broadcast: {e}")
             
     def close(self):
         self.running = False
