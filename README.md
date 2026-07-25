@@ -86,8 +86,13 @@ The mDNS feature perfectly solves this: it automatically broadcasts a fixed doma
 - **Unsupported Environments**: Native Windows, native Mac, Windows WSL virtual machines, and Docker Desktop on Windows/Mac. These environments have underlying virtual NAT network isolation, which blocks mDNS multicast packets from reaching the physical LAN.
 - **What users need to do**:
   - The code automatically detects these isolated virtual environments at startup and **silently disables** the mDNS feature to prevent the program from crashing due to network conflicts.
-  - You don't need to change any code. If deploying with Docker, please **keep the default `ports: ["5000:5000"]` configuration untouched** in `docker-compose.yml`.
-  - You must access the control panel the traditional way, by entering `http://localhost:5000` or the server's actual LAN IP address in your browser.
+  - You do not need to change any code. If deploying via Docker, ensure you **keep the default `ports: ["5000:5000"]` mapping in `docker-compose.yml` unchanged**.
+  - You must access the control panel using the traditional method: type `http://localhost:5000` or the server's actual LAN IP into your browser.
+
+**4. Troubleshooting: Browser throws `ERR_EMPTY_RESPONSE`**
+If you can perfectly access the panel via its IP address but get an `ERR_EMPTY_RESPONSE` or connection error when visiting `yeelux.local` on your device, it is highly likely caused by **network proxy or VPN software running in global TUN or Fake-IP mode**.
+- **Why this happens**: The proxy software globally intercepts the `.local` LAN domain request and tries to resolve it via an external DNS server, ultimately terminating the connection.
+- **How to fix**: The quickest fix is to **temporarily quit your proxy software**. For a permanent fix, add `*.local` to your proxy software's bypass list or `fake-ip-filter` settings to ensure it routes directly to the local network.
 
 ---
 
