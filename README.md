@@ -5,23 +5,23 @@
 This is an open-source Local Area Network (LAN) control panel designed specifically for **Yeelight (and Mi Home) smart lights**, built on top of `python-miio`.
 It requires no public internet connection or official apps, communicating directly with devices on your local network with millisecond-level response latency.
 
-## ✨ Features
+## 1. Features
 - ⏱️ **Sleep Timer**: One-click countdown timer to automatically turn off the light.
 - 🍅 **Pomodoro / Focus Mode**: Customize work and rest durations. When a work session ends, the light will blink to notify you and automatically switch to an eye-protection dim and warm mode. When the rest session ends, it blinks again and restores the bright working light.
 
-## 💡 Compatibility
+## 2. Compatibility
 Thanks to the underlying `python-miio` universal protocol library, this project is theoretically compatible with the vast majority of Yeelight products that support "LAN Control".
 
-## 🛠️ Installation
+## 3. Installation
 
-### 1. Basic Dependencies
+### 3.1 Basic Dependencies
 Ensure you have Python 3.8+ installed on your computer or server.
 After cloning this repository, install the required dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Device Configuration (devices.json)
+### 3.2 Device Configuration (devices.json)
 This project supports controlling multiple smart lights across your home. Copy `devices.example.json` in the project root directory and rename it to `devices.json`, then fill in the IP and Token for all your devices:
 ```json
 [
@@ -48,7 +48,7 @@ This project supports controlling multiple smart lights across your home. Copy `
 >
 > Run the extractor according to the official instructions of that project, and it will automatically list the IP and Token for all smart devices under your account. Once obtained, fill them into the `devices.json` file mentioned above. (Note: This project does not contain any third-party scripts involving Xiaomi cloud logins.)
 
-### 3. Run the Service
+### 3.3 Run the Service
 
 **Method 1: Run locally with Python**
 ```bash
@@ -67,7 +67,7 @@ After the service starts, you can access it in your browser using `http://localh
 
 ---
 
-### 🌐 LAN Geek Access: Zero-Config mDNS Domain Broadcast
+### 3.4 🌐 LAN Geek Access: Zero-Config mDNS Domain Broadcast
 
 To provide the ultimate smart home experience, this project features a built-in **mDNS (Multicast DNS) LAN broadcast**, powered by `zeroconf`.
 
@@ -97,7 +97,7 @@ If you can perfectly access the panel via its IP address but get an `ERR_EMPTY_R
 
 ---
 
-### 📱 Deploying on an Android Phone (Termux)
+### 3.5 📱 Deploying on an Android Phone (Termux)
 
 If you want to turn an Android phone into a 24/7 micro-server, deploying with **Termux** is an excellent choice. Since this project uses `cryptography` (which relies on Rust), compiling it directly on a phone will likely fail. Please follow these specific steps to avoid common pitfalls:
 
