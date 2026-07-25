@@ -159,9 +159,18 @@ def setup_mdns(port):
             s.connect(("8.8.8.8", 80))
             local_ip = s.getsockname()[0]
         except Exception:
-            local_ip = socket.gethostbyname(socket.gethostname())
+            try:
+                # Fallback for some restricted Android/Termux environments
+                s.connect(("192.168.1.1", 80))
+                local_ip = s.getsockname()[0]
+            except Exception:
+                local_ip = socket.gethostbyname(socket.gethostname())
         finally:
             s.close()
+            
+        print(f"🔍 [mDNS] Detected local IP for broadcast: {local_ip}")
+        if local_ip.startswith("127."):
+            print("⚠️ [mDNS] Warning: Broadcasting localhost (127.0.0.1). This means other devices might try to connect to themselves!")
         
         info = ServiceInfo(
             "_http._tcp.local.",
