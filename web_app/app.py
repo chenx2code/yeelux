@@ -186,7 +186,7 @@ def setup_mdns(port):
             properties={"desc": "Yeelux Smart Lamp Control"},
             server=f"{env_name}.local.",
         )
-        zeroconf_instance = Zeroconf()
+        zeroconf_instance = Zeroconf(interfaces=[local_ip])
         zeroconf_instance.register_service(info)
         print(f"🚀 [mDNS] Magic broadcast started! Local network access: http://{env_name}.local:{port}")
         return zeroconf_instance
