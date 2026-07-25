@@ -67,33 +67,19 @@ After the service starts, you can access it in your browser using `http://localh
 
 ---
 
-### 3.4 🌐 LAN Geek Access: Zero-Config mDNS Domain Broadcast
+### 3.4 🌐 LAN Access: Static IP (Recommended)
 
-To provide the ultimate smart home experience, this project features a built-in **mDNS (Multicast DNS) LAN broadcast**, powered by `zeroconf`.
+To ensure the most stable and responsive smart home experience, it is **highly recommended to assign a static IP** to the device running the Yeelux service.
 
-**1. Core Advantages and Solved Pain Points**
-In a home network, the router's DHCP mechanism can cause the server's IP address to change. When the IP changes, your saved bookmarks become invalid, and you have to constantly check the new IP, which is extremely tedious.
-The mDNS feature perfectly solves this: it automatically broadcasts a fixed domain name to your entire local network. You **never have to memorize boring IP addresses again**. From any browser connected to the same Wi-Fi, simply type the domain 👉 **`http://yeelux.local:5000`** and the control panel will permanently and reliably appear!
+In a home network, the router's DHCP mechanism can cause the server's IP address to change. If the IP changes, any bookmarks you saved on your phone or computer will break.
 
-**2. Supported Environments and Configurations**
-- **Supported Environments**: Native physical Linux machines (like Raspberry Pi, Ubuntu servers), NAS devices, and Android phones (Termux).
-- **What users need to do**:
-  - **If running directly with Python**: No configuration needed. The code automatically broadcasts `yeelux.local` out of the box.
-  - **If deploying with Docker**: You **MUST** modify the `docker-compose.yml` file: **comment out the `ports` lines and uncomment `network_mode: "host"`**. This binds the container directly to the host's physical network adapter, transmitting the mDNS broadcast to the entire LAN.
-  - *(Advanced)* **If running multiple instances in the same home**: To prevent hostname conflicts, you need to forcefully override the name by adding a line to the respective `.env` file (e.g., `MDNS_NAME=yeelux-bedroom`). The domain for that machine will instantly change to `http://yeelux-bedroom.local:5000`.
-  - *(Advanced)* **Customize mDNS polling interval**: If running in an environment that cannot passively listen to **underlying OS network interface events** (due to permission restrictions like the Android Termux sandbox), the service automatically falls back to active polling for IP changes. It defaults to 180 seconds. You can override this by adding `MDNS_POLLING_INTERVAL=180` in your `.env` file (unit: seconds).
+**Best Practice**:
+1. Log into your home router's admin panel.
+2. Find the "DHCP Static IP Allocation" or "IP/MAC Binding" feature.
+3. Bind the device running this service (e.g., an old phone, Raspberry Pi) to a fixed IP (like `192.168.1.100`).
+4. Bookmark `http://192.168.1.100:5000` directly in your browser.
 
-**3. Unsupported Environments and Workarounds**
-- **Unsupported Environments**: Native Windows, native Mac, Windows WSL virtual machines, and Docker Desktop on Windows/Mac. These environments have underlying virtual NAT network isolation, which blocks mDNS multicast packets from reaching the physical LAN.
-- **What users need to do**:
-  - The code automatically detects these isolated virtual environments at startup and **silently disables** the mDNS feature to prevent the program from crashing due to network conflicts.
-  - You do not need to change any code. If deploying via Docker, ensure you **keep the default `ports: ["5000:5000"]` mapping in `docker-compose.yml` unchanged**.
-  - You must access the control panel using the traditional method: type `http://localhost:5000` or the server's actual LAN IP into your browser.
-
-**4. Troubleshooting: Browser throws `ERR_EMPTY_RESPONSE`**
-If you can perfectly access the panel via its IP address but get an `ERR_EMPTY_RESPONSE` or connection error when visiting `yeelux.local` on your device, it is highly likely caused by **network proxy or VPN software running in global TUN or Fake-IP mode**.
-- **Why this happens**: The proxy software globally intercepts the `.local` LAN domain request and tries to resolve it via an external DNS server, ultimately terminating the connection.
-- **How to fix**: The quickest fix is to **temporarily quit your proxy software**. For a permanent fix, add `*.local` to your proxy software's bypass list or `fake-ip-filter` settings to ensure it routes directly to the local network.
+By doing this, you avoid any mDNS sleep/wake delays and guarantee that your control panel loads instantly every single time.
 
 ---
 
