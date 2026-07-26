@@ -1,9 +1,9 @@
-from flask import Flask, jsonify, request, render_template
 import sys
 import os
 import json
 import logging
 from dotenv import load_dotenv
+from flask import Flask, jsonify, request, render_template, send_from_directory
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -44,6 +44,18 @@ for dev in devices_config:
 @app.route('/')
 def index():
     return render_template('index.html', devices=devices_config)
+
+@app.route('/service-worker.js')
+def serve_sw():
+    return send_from_directory('static', 'service-worker.js', mimetype='application/javascript')
+
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory('static', 'manifest.json', mimetype='application/json')
+
+@app.route('/favicon.png')
+def serve_favicon():
+    return send_from_directory('static/images', 'favicon.png', mimetype='image/png')
 
 @app.route('/api/status/all', methods=['GET'])
 def get_all_status():
