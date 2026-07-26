@@ -4,7 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1c1c1e">
     <title>YeeLux</title>
+    <!-- Favicon and PWA -->
+    <link rel="icon" href="/favicon.png" type="image/png">
+    <!-- iOS needs a solid square icon without transparency -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/icon-maskable-192.png') }}">
+    <link rel="manifest" href="/manifest.json">
     <!-- Use system native fonts -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4">
 </head>
@@ -205,6 +211,19 @@
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}?v=4"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+    </script>
 </body>
 
 </html>
