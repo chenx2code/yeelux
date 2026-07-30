@@ -304,20 +304,18 @@ deviceGroups.forEach(group => {
         }
         
         try {
-            await fetch('/api/presets', {
+            const res = await fetch('/api/presets', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+            const result = await res.json();
+            
+            // Keep the editor focused on the newly saved/updated preset
+            qmSaveBtn.setAttribute('data-edit-id', result.id);
+            qmDeleteBtn.classList.remove('hidden');
+            
             fetchPresets();
-            // Reset to create mode after save
-            qmSaveBtn.removeAttribute('data-edit-id');
-            if (qmNameInput) qmNameInput.value = '';
-            qmDeleteBtn.classList.add('hidden');
-            const qmList = group.querySelector('.quick-modes-list');
-            if (qmList) {
-                qmList.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));
-            }
         } catch(e) {
             console.error("Save preset error", e);
         }
@@ -331,7 +329,7 @@ deviceGroups.forEach(group => {
             fetchPresets();
             qmSaveBtn.removeAttribute('data-edit-id');
             qmDeleteBtn.classList.add('hidden');
-            if (qmNameInput) qmNameInput.value = '';
+            if (qmNameInput) qmNameInput.value = translations[currentLang].preset_new;
             const qmList = group.querySelector('.quick-modes-list');
             if (qmList) {
                 qmList.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));
@@ -350,7 +348,7 @@ deviceGroups.forEach(group => {
                 // Reset to create mode when opened
                 qmSaveBtn.removeAttribute('data-edit-id');
                 qmDeleteBtn.classList.add('hidden');
-                if (qmNameInput) qmNameInput.value = '';
+                if (qmNameInput) qmNameInput.value = translations[currentLang].preset_new;
                 if (qmList) {
                     qmList.classList.add('editing-mode');
                     qmList.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));
@@ -647,7 +645,7 @@ async function fetchPresets() {
                         const saveBtn = group.querySelector('.qm-save-btn');
                         const delBtn = group.querySelector('.qm-delete-btn');
                         
-                        if (nameInput) nameInput.value = p.name || translations[currentLang][p.id] || '';
+                        if (nameInput) nameInput.value = p.name || translations[currentLang][p.id] || translations[currentLang].preset_new;
                         bInput.value = p.brightness;
                         bVal.textContent = p.brightness + '%';
                         ctInput.value = p.color_temp;

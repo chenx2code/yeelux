@@ -157,16 +157,18 @@ def save_preset():
                 "brightness": int(data.get('brightness', 50)),
                 "color_temp": int(data.get('color_temp', 4000))
             })
+        saved_id = preset_id
     else:
+        saved_id = "preset_" + str(uuid.uuid4())[:8]
         presets.append({
-            "id": "preset_" + str(uuid.uuid4())[:8],
+            "id": saved_id,
             "name": data.get('name', ''),
             "brightness": int(data.get('brightness', 50)),
             "color_temp": int(data.get('color_temp', 4000))
         })
     
     save_presets(presets)
-    return jsonify({'success': True, 'presets': presets})
+    return jsonify({'success': True, 'presets': presets, 'id': saved_id})
 
 @app.route('/api/presets/<preset_id>', methods=['DELETE'])
 def delete_preset(preset_id):

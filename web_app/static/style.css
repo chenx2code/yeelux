@@ -503,14 +503,16 @@ input:checked+.switch-track:before {
 
 /* Quick Modes Edit State */
 .quick-modes-list.editing-mode .preset-bubble {
+    /* Dim unselected buttons to indicate edit mode */
     opacity: 0.5;
-    transform: scale(0.9);
+    transform: scale(1);
 }
 
 .quick-modes-list.editing-mode .preset-bubble.selected {
+    /* Selected button gets full opacity and a grey ring */
     opacity: 1;
-    transform: scale(1.15);
-    box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--accent-color);
+    transform: scale(1);
+    box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px rgba(142, 142, 147, 0.6);
 }
 
 .quick-modes-list.editing-mode .preset-bubble:hover {
@@ -560,6 +562,30 @@ input:checked+.switch-track:before {
 
 .input-row label {
     font-size: 15px;
+}
+
+.input-row input[type="text"] {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: var(--secondary-text);
+    font-family: inherit;
+    font-size: 15px;
+    flex: 1;
+    margin-left: 16px;
+    text-align: right;
+    outline: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: color 0.2s;
+}
+
+.input-row input[type="text"]:focus {
+    color: var(--text-color);
+}
+.input-row input[type="text"]::placeholder {
+    color: rgba(142, 142, 147, 0.5);
 }
 
 .apple-input {
