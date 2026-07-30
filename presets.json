@@ -6,15 +6,15 @@
         "name": "\u4f11\u606f"
     },
     {
-        "id": "preset_70a1c424",
-        "name": "\u5de5\u4f5c",
-        "brightness": 100,
-        "color_temp": 4201
-    },
-    {
         "id": "preset_31004746",
         "name": "WORK",
         "brightness": 100,
         "color_temp": 5000
+    },
+    {
+        "id": "preset_7e3f3dcf",
+        "name": "\u65b0\u9884\u8bbe",
+        "brightness": 50,
+        "color_temp": 4000
     }
 ]

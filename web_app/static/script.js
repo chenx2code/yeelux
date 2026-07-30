@@ -30,6 +30,7 @@ const translations = {
         quick_modes: "Quick Modes",
         preset_name: "Name",
         save: "Save",
+        saved: "Saved",
         delete: "Delete",
         preset_new: "New Preset"
     },
@@ -59,6 +60,7 @@ const translations = {
         quick_modes: "快捷模式",
         preset_name: "名称",
         save: "保存",
+        saved: "已保存",
         delete: "删除",
         preset_new: "新预设"
     }
@@ -314,6 +316,15 @@ deviceGroups.forEach(group => {
             // Keep the editor focused on the newly saved/updated preset
             qmSaveBtn.setAttribute('data-edit-id', result.id);
             qmDeleteBtn.classList.remove('hidden');
+            
+            // Success visual feedback
+            const originalText = translations[currentLang].save;
+            qmSaveBtn.textContent = translations[currentLang].saved;
+            qmSaveBtn.classList.add('success-state');
+            setTimeout(() => {
+                qmSaveBtn.textContent = originalText;
+                qmSaveBtn.classList.remove('success-state');
+            }, 1500);
             
             fetchPresets();
         } catch(e) {

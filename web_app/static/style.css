@@ -761,3 +761,9 @@ input:checked+.switch-track:before {
     box-shadow: none;
     background: rgba(118, 118, 128, 0.15);
 }
+
+/* Button Success State Animation */
+.success-state {
+    background-color: #34C759 !important; /* iOS system green */
+    transition: background-color 0.2s ease-in-out;
+}
