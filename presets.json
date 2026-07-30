@@ -1,0 +1,19 @@
+[
+    {
+        "id": "preset_46567f72",
+        "brightness": 10,
+        "color_temp": 2600
+    },
+    {
+        "id": "preset_489eb1e4",
+        "name": "",
+        "brightness": 50,
+        "color_temp": 4000
+    },
+    {
+        "id": "preset_70a1c424",
+        "name": "",
+        "brightness": 100,
+        "color_temp": 4201
+    }
+]

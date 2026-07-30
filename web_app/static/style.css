@@ -422,6 +422,105 @@ input:checked+.switch-track:before {
     border: none;
 }
 
+/* Preset Bubbles */
+.preset-modes {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 16px;
+    margin-bottom: 4px;
+}
+
+.preset-bubble {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: var(--input-bg);
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: inset 0 0 0 1px rgba(60, 60, 67, 0.1), 0 2px 8px rgba(0, 0, 0, 0.04);
+    will-change: transform, box-shadow, opacity;
+}
+
+/* Custom Apple Tooltip */
+.preset-bubble::after {
+    content: attr(data-title);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px) scale(0.95);
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+}
+
+.preset-bubble::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    border: 4px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.75);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 100;
+}
+
+.preset-bubble:hover::after,
+.preset-bubble:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.preset-bubble:hover {
+    box-shadow: inset 0 0 0 1px rgba(60, 60, 67, 0.1), 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: scale(1.1);
+}
+
+@media (prefers-color-scheme: dark) {
+    .preset-bubble:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* Quick Modes Edit State */
+.quick-modes-list.editing-mode .preset-bubble {
+    opacity: 0.5;
+    transform: scale(0.9);
+}
+
+.quick-modes-list.editing-mode .preset-bubble.selected {
+    opacity: 1;
+    transform: scale(1.15);
+    box-shadow: 0 0 0 2px var(--card-bg), 0 0 0 4px var(--accent-color);
+}
+
+.quick-modes-list.editing-mode .preset-bubble:hover {
+    opacity: 0.8;
+}
+
+.quick-modes-list.editing-mode .preset-bubble.selected:hover {
+    opacity: 1;
+}
+
 /* Automation Sections */
 .automation-header {
     display: flex;
