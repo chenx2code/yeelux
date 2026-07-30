@@ -113,24 +113,26 @@ def set_colortemp(device_id):
     managers[device_id].set_color_temp(int(val))
     return jsonify({'success': True})
 
-PRESETS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'presets.json')
+QUICK_MODES_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'quick_modes.json')
 
 def load_presets():
-    if not os.path.exists(PRESETS_FILE):
-        default_presets = [
-            {"id": "preset_rest", "brightness": 10, "color_temp": 2600},
-            {"id": "preset_work", "brightness": 100, "color_temp": 4200}
-        ]
+    if not os.path.exists(QUICK_MODES_FILE):
+        example_file = QUICK_MODES_FILE.replace('quick_modes.json', 'quick_modes.example.json')
+        try:
+            with open(example_file, 'r', encoding='utf-8') as f:
+                default_presets = json.load(f)
+        except Exception:
+            default_presets = []
         save_presets(default_presets)
         return default_presets
     try:
-        with open(PRESETS_FILE, 'r', encoding='utf-8') as f:
+        with open(QUICK_MODES_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     except Exception:
         return []
 
 def save_presets(presets):
-    with open(PRESETS_FILE, 'w', encoding='utf-8') as f:
+    with open(QUICK_MODES_FILE, 'w', encoding='utf-8') as f:
         json.dump(presets, f, indent=4)
 
 @app.route('/api/presets', methods=['GET'])
@@ -159,7 +161,11 @@ def save_preset():
             })
         saved_id = preset_id
     else:
-        saved_id = "preset_" + str(uuid.uuid4())[:8]
+        existing_ids = {p['id'] for p in presets}
+        while True:
+            saved_id = str(uuid.uuid4())[:8]
+            if saved_id not in existing_ids:
+                break
         presets.append({
             "id": saved_id,
             "name": data.get('name', ''),

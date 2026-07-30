@@ -1,0 +1,14 @@
+[
+    {
+        "id": "7f3a9b1c",
+        "name": "Work",
+        "brightness": 100,
+        "color_temp": 4200
+    },
+    {
+        "id": "4e8d2a6f",
+        "name": "Rest",
+        "brightness": 10,
+        "color_temp": 2600
+    }
+]

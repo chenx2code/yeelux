@@ -18,6 +18,10 @@
     --input-bg: rgba(118, 118, 128, 0.12);
 }
 
+.hidden {
+    display: none !important;
+}
+
 @media (prefers-color-scheme: dark) {
     :root {
         /* iOS Dark Theme Variables */
@@ -102,12 +106,13 @@ body {
     }
 }
 
-/* Layout Styles */
 .main-layout {
     position: relative;
+    width: 100%;
     max-width: 1000px;
     margin: 0 auto;
     padding: 0 20px;
+    box-sizing: border-box;
 }
 
 .sidebar-toc {
@@ -197,8 +202,9 @@ body {
 }
 
 .apple-dashboard {
-    width: 100%;
-    max-width: 420px;
+    width: fit-content;
+    min-width: min(100%, 420px);
+    max-width: min(100%, 800px);
     margin: 40px auto;
 }
 
@@ -447,13 +453,9 @@ input:checked+.switch-track:before {
     will-change: transform, box-shadow, opacity;
 }
 
-/* Custom Apple Tooltip */
-.preset-bubble::after {
-    content: attr(data-title);
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%) translateY(4px) scale(0.95);
+/* Custom Global Tooltip */
+.global-tooltip {
+    position: fixed;
     background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -465,29 +467,25 @@ input:checked+.switch-track:before {
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: opacity 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: translateX(-50%) translateY(4px) scale(0.95);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 100;
+    z-index: 9999;
 }
 
-.preset-bubble::before {
-    content: '';
-    position: absolute;
-    bottom: calc(100% + 4px);
-    left: 50%;
-    transform: translateX(-50%) translateY(4px);
-    border: 4px solid transparent;
-    border-top-color: rgba(0, 0, 0, 0.75);
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-    z-index: 100;
-}
-
-.preset-bubble:hover::after,
-.preset-bubble:hover::before {
+.global-tooltip.visible {
     opacity: 1;
     transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.global-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.75);
 }
 
 .preset-bubble:hover {
@@ -499,6 +497,59 @@ input:checked+.switch-track:before {
     .preset-bubble:hover {
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
+}
+
+/* Quick Modes Horizontal Scroll & Add Button */
+.automation-header .header-right {
+    flex: 1;
+    min-width: 0;
+    justify-content: flex-end;
+}
+
+.quick-modes-list {
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    margin-top: -20px;
+    margin-bottom: -20px;
+}
+
+.quick-modes-list > :first-child {
+    margin-left: auto;
+}
+
+.quick-modes-list::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+}
+
+.preset-bubble.add-bubble {
+    background-color: transparent;
+    border: 1.5px dashed var(--border-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--secondary-text);
+    box-shadow: none;
+    transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.preset-bubble.add-bubble:hover {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.preset-bubble.add-bubble svg {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
 }
 
 /* Quick Modes Edit State */

@@ -80,6 +80,13 @@ function setLanguage(lang) {
         }
     });
 
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (translations[lang][key]) {
+            el.dataset.title = translations[lang][key];
+        }
+    });
+
     // Update Segmented Control UI
     document.querySelectorAll('.lang-option').forEach(el => {
         if (el.getAttribute('data-lang') === lang) {
@@ -106,6 +113,77 @@ langOptions.forEach(option => {
 // Initial Translation Setup
 document.addEventListener('DOMContentLoaded', () => {
     setLanguage(currentLang);
+
+    // Global Tooltip Logic for bubbles
+    const tooltip = document.getElementById('global-tooltip');
+    
+    document.addEventListener('mouseover', (e) => {
+        const bubble = e.target.closest('.preset-bubble');
+        if (bubble && bubble.dataset.title && !bubble.classList.contains('hidden')) {
+            tooltip.textContent = bubble.dataset.title;
+            const rect = bubble.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + rect.width / 2}px`;
+            // approximate top before layout
+            tooltip.style.top = `${rect.top - 40}px`; 
+            tooltip.classList.add('visible');
+            
+            // Recalculate accurately once text is set
+            requestAnimationFrame(() => {
+                tooltip.style.top = `${rect.top - 8 - tooltip.offsetHeight}px`;
+            });
+        }
+    });
+    
+    document.addEventListener('mouseout', (e) => {
+        const bubble = e.target.closest('.preset-bubble');
+        if (bubble) {
+            tooltip.classList.remove('visible');
+        }
+    });
+
+    // PC Drag to Scroll for Quick Modes
+    document.querySelectorAll('.quick-modes-list').forEach(slider => {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+        let isDragging = false;
+
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            isDragging = false;
+            slider.style.cursor = 'grabbing';
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+
+        slider.addEventListener('mouseleave', () => {
+            isDown = false;
+            slider.style.cursor = 'auto';
+        });
+
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+            slider.style.cursor = 'auto';
+        });
+
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX);
+            if (Math.abs(walk) > 5) {
+                isDragging = true;
+            }
+            slider.scrollLeft = scrollLeft - walk;
+        });
+
+        slider.addEventListener('click', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, true);
+    });
 });
 
 // --- Sidebar TOC Logic ---
@@ -280,6 +358,17 @@ deviceGroups.forEach(group => {
     const qmCtVal = group.querySelector('.qm-ct-val');
     const qmSaveBtn = group.querySelector('.qm-save-btn');
     const qmDeleteBtn = group.querySelector('.qm-delete-btn');
+    const qmAddBtn = group.querySelector('.preset-bubble.add-bubble');
+
+    if (qmAddBtn) {
+        qmAddBtn.addEventListener('click', () => {
+            const list = group.querySelector('.quick-modes-list');
+            if (list) list.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));
+            qmSaveBtn.removeAttribute('data-edit-id');
+            qmDeleteBtn.classList.add('hidden');
+            if (qmNameInput) qmNameInput.value = translations[currentLang].preset_new;
+        });
+    }
 
     if (qmBrightnessInput && qmBrightnessVal) {
         qmBrightnessInput.addEventListener('input', (e) => {
@@ -356,6 +445,9 @@ deviceGroups.forEach(group => {
         if (qmHiddenContent) {
             qmHiddenContent.classList.toggle('expanded');
             if (qmHiddenContent.classList.contains('expanded')) {
+                // Show Add button
+                if (qmAddBtn) qmAddBtn.classList.remove('hidden');
+                
                 // Reset to create mode when opened
                 qmSaveBtn.removeAttribute('data-edit-id');
                 qmDeleteBtn.classList.add('hidden');
@@ -365,6 +457,9 @@ deviceGroups.forEach(group => {
                     qmList.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));
                 }
             } else {
+                // Hide Add button
+                if (qmAddBtn) qmAddBtn.classList.add('hidden');
+                
                 if (qmList) {
                     qmList.classList.remove('editing-mode');
                     qmList.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));

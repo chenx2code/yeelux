@@ -119,6 +119,9 @@
                         <div class="quick-modes-list" style="display: flex; gap: 12px; align-items: center;">
                             <!-- Bubbles will be injected here by JS -->
                         </div>
+                        <button class="preset-bubble add-bubble hidden" style="width: 32px; height: 32px; flex-shrink: 0;" data-i18n-title="preset_new">
+                            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        </button>
                         <button class="icon-btn qm-settings-toggle-btn" title="Settings">
                             <svg viewBox="0 0 24 24"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" /></svg>
                         </button>
@@ -288,6 +291,7 @@
             });
         }
     </script>
+    <div id="global-tooltip" class="global-tooltip"></div>
 </body>
 
 </html>
