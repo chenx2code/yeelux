@@ -4,6 +4,7 @@ import json
 import logging
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, render_template, send_from_directory
+import uuid
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -111,6 +112,76 @@ def set_colortemp(device_id):
     val = data.get('value', 4000)
     managers[device_id].set_color_temp(int(val))
     return jsonify({'success': True})
+
+QUICK_MODES_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'quick_modes.json')
+
+def load_presets():
+    if not os.path.exists(QUICK_MODES_FILE):
+        example_file = QUICK_MODES_FILE.replace('quick_modes.json', 'quick_modes.example.json')
+        try:
+            with open(example_file, 'r', encoding='utf-8') as f:
+                default_presets = json.load(f)
+        except Exception:
+            default_presets = []
+        save_presets(default_presets)
+        return default_presets
+    try:
+        with open(QUICK_MODES_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+def save_presets(presets):
+    with open(QUICK_MODES_FILE, 'w', encoding='utf-8') as f:
+        json.dump(presets, f, indent=4)
+
+@app.route('/api/presets', methods=['GET'])
+def get_presets():
+    return jsonify(load_presets())
+
+@app.route('/api/presets', methods=['POST'])
+def save_preset():
+    data = request.json
+    presets = load_presets()
+    preset_id = data.get('id')
+    
+    if preset_id:
+        for p in presets:
+            if p['id'] == preset_id:
+                if 'name' in data: p['name'] = data['name']
+                p['brightness'] = int(data.get('brightness', 50))
+                p['color_temp'] = int(data.get('color_temp', 4000))
+                break
+        else:
+            presets.append({
+                "id": preset_id,
+                "name": data.get('name', ''),
+                "brightness": int(data.get('brightness', 50)),
+                "color_temp": int(data.get('color_temp', 4000))
+            })
+        saved_id = preset_id
+    else:
+        existing_ids = {p['id'] for p in presets}
+        while True:
+            saved_id = str(uuid.uuid4())[:8]
+            if saved_id not in existing_ids:
+                break
+        presets.append({
+            "id": saved_id,
+            "name": data.get('name', ''),
+            "brightness": int(data.get('brightness', 50)),
+            "color_temp": int(data.get('color_temp', 4000))
+        })
+    
+    save_presets(presets)
+    return jsonify({'success': True, 'presets': presets, 'id': saved_id})
+
+@app.route('/api/presets/<preset_id>', methods=['DELETE'])
+def delete_preset(preset_id):
+    presets = load_presets()
+    presets = [p for p in presets if p['id'] != preset_id]
+    save_presets(presets)
+    return jsonify({'success': True, 'presets': presets})
 
 @app.route('/api/timer/<device_id>', methods=['GET', 'POST'])
 def handle_timer(device_id):

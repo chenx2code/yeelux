@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/icon-maskable-192.png') }}">
     <link rel="manifest" href="/manifest.json">
     <!-- Use system native fonts -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=7">
 </head>
 
 <body>
@@ -95,6 +95,73 @@
                             value="4000">
                     </div>
                     <div class="slider-value ct-val">--K</div>
+                </div>
+                
+            </div>
+
+            <hr class="card-divider">
+
+            <!-- Quick Modes -->
+            <div class="automation-section">
+                <div class="automation-header">
+                    <div class="header-left">
+                        <div class="icon-box" style="width: 32px; height: 32px; border-radius: 8px;">
+                            <!-- MDI Lightning Bolt Icon -->
+                            <svg viewBox="0 0 24 24" style="width: 18px; height: 18px;">
+                                <path d="M7,2V13H10V22L17,10H13L17,2H7Z" />
+                            </svg>
+                        </div>
+                        <div class="entity-info" style="justify-content: center;">
+                            <div class="entity-name" style="font-size: 15px;" data-i18n="quick_modes">快捷模式</div>
+                        </div>
+                    </div>
+                    <div class="header-right" style="display: flex; gap: 8px; align-items: center;">
+                        <div class="quick-modes-list" style="display: flex; gap: 12px; align-items: center;">
+                            <!-- Bubbles will be injected here by JS -->
+                        </div>
+                        <button class="preset-bubble add-bubble hidden" style="width: 32px; height: 32px; flex-shrink: 0;" data-i18n-title="preset_new">
+                            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                        </button>
+                        <button class="icon-btn qm-settings-toggle-btn" title="Settings">
+                            <svg viewBox="0 0 24 24"><path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" /></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="hidden-content">
+                    <div class="automation-content quick-modes-config hidden-content-inner">
+                        <div class="input-row">
+                            <label data-i18n="preset_name">Name</label>
+                            <input type="text" class="qm-name-input apple-input" style="text-align: right; width: 120px; padding: 0 8px; line-height: 28px; box-sizing: border-box;" placeholder="Preset">
+                        </div>
+                        <div class="slider-row" style="margin-top: 4px;">
+                            <div class="slider-icon" style="opacity: 0.6;">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18M20,15.31L23.31,12L20,8.69V4H15.31L12,0.69L8.69,4H4V8.69L0.69,12L4,15.31V20H8.69L12,23.31L15.31,20H20V15.31Z" />
+                                </svg>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" class="qm-brightness-input apple-slider" min="1" max="100" value="50">
+                            </div>
+                            <div class="slider-value qm-brightness-val">50%</div>
+                        </div>
+
+                        <div class="slider-row" style="margin-top: 4px;">
+                            <div class="slider-icon" style="opacity: 0.6;">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22A10 10 0 0 0 22 12A10 10 0 0 0 12 2M12 4A8 8 0 0 1 20 12A8 8 0 0 1 12 20V4Z" />
+                                </svg>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" class="qm-ct-input apple-slider ct-gradient" min="2600" max="5000" value="4000">
+                            </div>
+                            <div class="slider-value qm-ct-val">4000K</div>
+                        </div>
+
+                        <div class="input-row" style="justify-content: center; gap: 16px; border-bottom: none; border-top: none; margin-top: 8px; margin-bottom: 4px; padding-top: 0; min-height: auto;">
+                            <button class="apple-btn stop-btn qm-delete-btn hidden" data-i18n="delete" style="width: 80px; padding: 6px 16px;">Delete</button>
+                            <button class="apple-btn start-btn qm-save-btn" data-i18n="save" style="width: 80px; padding: 6px 16px; background-color: var(--accent-color); color: white;">Save</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -210,7 +277,7 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='script.js') }}?v=4"></script>
+    <script src="{{ url_for('static', filename='script.js') }}?v=7"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -224,6 +291,7 @@
             });
         }
     </script>
+    <div id="global-tooltip" class="global-tooltip"></div>
 </body>
 
 </html>

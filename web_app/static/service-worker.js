@@ -1,4 +1,4 @@
-const CACHE_NAME = 'yeelux-pwa-v1';
+const CACHE_NAME = 'yeelux-pwa-v7';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',

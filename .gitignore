@@ -26,3 +26,4 @@ __pycache__/
 
 # Local Configurations
 devices.json
+quick_modes.json

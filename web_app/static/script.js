@@ -24,7 +24,15 @@ const translations = {
         dim: "Dim",
         turn_off: "Off",
         rest_brightness: "Brightness",
-        rest_color_temp: "Color Temp"
+        rest_color_temp: "Color Temp",
+        preset_work: "Work",
+        preset_rest: "Rest",
+        quick_modes: "Quick Modes",
+        preset_name: "Name",
+        save: "Save",
+        saved: "Saved",
+        delete: "Delete",
+        preset_new: "New Preset"
     },
     zh: {
         connecting: "正在连接...",
@@ -46,7 +54,15 @@ const translations = {
         dim: "调暗",
         turn_off: "关灯",
         rest_brightness: "亮度",
-        rest_color_temp: "色温"
+        rest_color_temp: "色温",
+        preset_work: "工作",
+        preset_rest: "休息",
+        quick_modes: "快捷模式",
+        preset_name: "名称",
+        save: "保存",
+        saved: "已保存",
+        delete: "删除",
+        preset_new: "新预设"
     }
 };
 
@@ -61,6 +77,13 @@ function setLanguage(lang) {
         const key = el.getAttribute('data-i18n');
         if (translations[lang][key]) {
             el.textContent = translations[lang][key];
+        }
+    });
+
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+        const key = el.getAttribute('data-i18n-title');
+        if (translations[lang][key]) {
+            el.dataset.title = translations[lang][key];
         }
     });
 
@@ -90,6 +113,77 @@ langOptions.forEach(option => {
 // Initial Translation Setup
 document.addEventListener('DOMContentLoaded', () => {
     setLanguage(currentLang);
+
+    // Global Tooltip Logic for bubbles
+    const tooltip = document.getElementById('global-tooltip');
+    
+    document.addEventListener('mouseover', (e) => {
+        const bubble = e.target.closest('.preset-bubble');
+        if (bubble && bubble.dataset.title && !bubble.classList.contains('hidden')) {
+            tooltip.textContent = bubble.dataset.title;
+            const rect = bubble.getBoundingClientRect();
+            tooltip.style.left = `${rect.left + rect.width / 2}px`;
+            // approximate top before layout
+            tooltip.style.top = `${rect.top - 40}px`; 
+            tooltip.classList.add('visible');
+            
+            // Recalculate accurately once text is set
+            requestAnimationFrame(() => {
+                tooltip.style.top = `${rect.top - 8 - tooltip.offsetHeight}px`;
+            });
+        }
+    });
+    
+    document.addEventListener('mouseout', (e) => {
+        const bubble = e.target.closest('.preset-bubble');
+        if (bubble) {
+            tooltip.classList.remove('visible');
+        }
+    });
+
+    // PC Drag to Scroll for Quick Modes
+    document.querySelectorAll('.quick-modes-list').forEach(slider => {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+        let isDragging = false;
+
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            isDragging = false;
+            slider.style.cursor = 'grabbing';
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+
+        slider.addEventListener('mouseleave', () => {
+            isDown = false;
+            slider.style.cursor = 'auto';
+        });
+
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+            slider.style.cursor = 'auto';
+        });
+
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX);
+            if (Math.abs(walk) > 5) {
+                isDragging = true;
+            }
+            slider.scrollLeft = scrollLeft - walk;
+        });
+
+        slider.addEventListener('click', (e) => {
+            if (isDragging) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, true);
+    });
 });
 
 // --- Sidebar TOC Logic ---
@@ -253,6 +347,127 @@ deviceGroups.forEach(group => {
     debounceSlider(group, brightnessSlider, brightnessVal, '%', `/api/brightness/${deviceId}`);
     debounceSlider(group, ctSlider, ctVal, 'K', `/api/colortemp/${deviceId}`);
     
+    // Remove old Preset Bindings
+    // New Quick Modes logic is handled globally for presets array
+    const qmToggleBtn = group.querySelector('.qm-settings-toggle-btn');
+    const qmHiddenContent = qmToggleBtn.closest('.automation-section').querySelector('.hidden-content');
+    const qmNameInput = group.querySelector('.qm-name-input');
+    const qmBrightnessInput = group.querySelector('.qm-brightness-input');
+    const qmBrightnessVal = group.querySelector('.qm-brightness-val');
+    const qmCtInput = group.querySelector('.qm-ct-input');
+    const qmCtVal = group.querySelector('.qm-ct-val');
+    const qmSaveBtn = group.querySelector('.qm-save-btn');
+    const qmDeleteBtn = group.querySelector('.qm-delete-btn');
+    const qmAddBtn = group.querySelector('.preset-bubble.add-bubble');
+
+    if (qmAddBtn) {
+        qmAddBtn.addEventListener('click', () => {
+            const list = group.querySelector('.quick-modes-list');
+            if (list) list.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));
+            qmSaveBtn.removeAttribute('data-edit-id');
+            qmDeleteBtn.classList.add('hidden');
+            if (qmNameInput) qmNameInput.value = translations[currentLang].preset_new;
+        });
+    }
+
+    if (qmBrightnessInput && qmBrightnessVal) {
+        qmBrightnessInput.addEventListener('input', (e) => {
+            qmBrightnessVal.textContent = e.target.value + '%';
+        });
+    }
+    
+    if (qmCtInput && qmCtVal) {
+        qmCtInput.addEventListener('input', (e) => {
+            qmCtVal.textContent = e.target.value + 'K';
+        });
+    }
+
+    qmSaveBtn.addEventListener('click', async () => {
+        const id = qmSaveBtn.getAttribute('data-edit-id');
+        const b = parseInt(qmBrightnessInput.value);
+        const ct = parseInt(qmCtInput.value);
+        let payload = { brightness: b, color_temp: ct };
+        if (id) payload.id = id;
+        if (qmNameInput && qmNameInput.value.trim() !== '') {
+            payload.name = qmNameInput.value.trim();
+        } else {
+            payload.name = '';
+        }
+        
+        try {
+            const res = await fetch('/api/presets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+            
+            // Keep the editor focused on the newly saved/updated preset
+            qmSaveBtn.setAttribute('data-edit-id', result.id);
+            qmDeleteBtn.classList.remove('hidden');
+            
+            // Success visual feedback
+            const originalText = translations[currentLang].save;
+            qmSaveBtn.textContent = translations[currentLang].saved;
+            qmSaveBtn.classList.add('success-state');
+            setTimeout(() => {
+                qmSaveBtn.textContent = originalText;
+                qmSaveBtn.classList.remove('success-state');
+            }, 1500);
+            
+            fetchPresets();
+        } catch(e) {
+            console.error("Save preset error", e);
+        }
+    });
+
+    qmDeleteBtn.addEventListener('click', async () => {
+        const id = qmSaveBtn.getAttribute('data-edit-id');
+        if (!id) return;
+        try {
+            await fetch(`/api/presets/${id}`, { method: 'DELETE' });
+            fetchPresets();
+            qmSaveBtn.removeAttribute('data-edit-id');
+            qmDeleteBtn.classList.add('hidden');
+            if (qmNameInput) qmNameInput.value = translations[currentLang].preset_new;
+            const qmList = group.querySelector('.quick-modes-list');
+            if (qmList) {
+                qmList.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));
+            }
+        } catch(e) {
+            console.error("Delete preset error", e);
+        }
+    });
+
+    qmToggleBtn.addEventListener('click', () => {
+        qmToggleBtn.classList.toggle('active');
+        const qmList = group.querySelector('.quick-modes-list');
+        if (qmHiddenContent) {
+            qmHiddenContent.classList.toggle('expanded');
+            if (qmHiddenContent.classList.contains('expanded')) {
+                // Show Add button
+                if (qmAddBtn) qmAddBtn.classList.remove('hidden');
+                
+                // Reset to create mode when opened
+                qmSaveBtn.removeAttribute('data-edit-id');
+                qmDeleteBtn.classList.add('hidden');
+                if (qmNameInput) qmNameInput.value = translations[currentLang].preset_new;
+                if (qmList) {
+                    qmList.classList.add('editing-mode');
+                    qmList.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));
+                }
+            } else {
+                // Hide Add button
+                if (qmAddBtn) qmAddBtn.classList.add('hidden');
+                
+                if (qmList) {
+                    qmList.classList.remove('editing-mode');
+                    qmList.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));
+                }
+            }
+        }
+    });
+
     // Timer Bindings
     const timerToggleBtn = group.querySelector('.timer-toggle-btn');
     const timerInput = group.querySelector('.timer-input');
@@ -472,6 +687,118 @@ async function fetchAutomations() {
 }
 
 // Poll status every 3 seconds
+function getCTColor(ct) {
+    if (ct <= 3800) {
+        let r = 255;
+        let g = 179 + ((ct - 2600) / 1200) * (255 - 179);
+        let b = 64 + ((ct - 2600) / 1200) * (255 - 64);
+        return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+    } else {
+        let r = 255 - ((ct - 3800) / 1200) * (255 - 137);
+        let g = 255 - ((ct - 3800) / 1200) * (255 - 180);
+        let b = 255 - ((ct - 3800) / 1200) * (255 - 250);
+        return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+    }
+}
+
+async function fetchPresets() {
+    try {
+        const res = await fetch('/api/presets');
+        const presets = await res.json();
+        
+        // Sort: color_temp asc, then brightness asc
+        presets.sort((a, b) => {
+            if (a.color_temp !== b.color_temp) return a.color_temp - b.color_temp;
+            return a.brightness - b.brightness;
+        });
+
+        deviceGroups.forEach(group => {
+            const list = group.querySelector('.quick-modes-list');
+            if (!list) return;
+            list.innerHTML = '';
+            
+            presets.forEach(p => {
+                const btn = document.createElement('button');
+                btn.className = 'preset-bubble';
+                btn.style.backgroundColor = getCTColor(p.color_temp);
+                btn.style.width = '32px';
+                btn.style.height = '32px';
+                btn.style.flexShrink = '0';
+                
+                let titleName = p.name || translations[currentLang][p.id] || translations[currentLang].preset_new;
+                btn.dataset.title = `${titleName} (${p.brightness}%, ${p.color_temp}K)`;
+                
+                // Re-apply selected class if this bubble is currently being edited
+                const saveBtn = group.querySelector('.qm-save-btn');
+                if (saveBtn && saveBtn.getAttribute('data-edit-id') === p.id) {
+                    btn.classList.add('selected');
+                }
+
+                btn.addEventListener('click', async () => {
+                    const qmList = group.querySelector('.quick-modes-list');
+                    const qmHiddenContent = qmList.closest('.automation-section').querySelector('.hidden-content');
+                    const isEditing = qmHiddenContent.classList.contains('expanded');
+                    
+                    if (isEditing) {
+                        qmList.querySelectorAll('.preset-bubble').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        
+                        const nameInput = group.querySelector('.qm-name-input');
+                        const bInput = group.querySelector('.qm-brightness-input');
+                        const bVal = group.querySelector('.qm-brightness-val');
+                        const ctInput = group.querySelector('.qm-ct-input');
+                        const ctVal = group.querySelector('.qm-ct-val');
+                        const saveBtn = group.querySelector('.qm-save-btn');
+                        const delBtn = group.querySelector('.qm-delete-btn');
+                        
+                        if (nameInput) nameInput.value = p.name || translations[currentLang][p.id] || translations[currentLang].preset_new;
+                        bInput.value = p.brightness;
+                        bVal.textContent = p.brightness + '%';
+                        ctInput.value = p.color_temp;
+                        ctVal.textContent = p.color_temp + 'K';
+                        saveBtn.setAttribute('data-edit-id', p.id);
+                        delBtn.classList.remove('hidden');
+                    } else {
+                        const deviceId = group.dataset.deviceId;
+                        const brightnessSlider = group.querySelector('.brightness-slider');
+                        const brightnessVal = group.querySelector('.brightness-val');
+                        const ctSlider = group.querySelector('.ct-slider');
+                        const ctVal = group.querySelector('.ct-val');
+                        
+                        if (brightnessSlider && brightnessVal) {
+                            brightnessSlider.value = p.brightness;
+                            brightnessVal.textContent = p.brightness + '%';
+                        }
+                        if (ctSlider && ctVal) {
+                            ctSlider.value = p.color_temp;
+                            ctVal.textContent = p.color_temp + 'K';
+                        }
+                        
+                        try {
+                            await fetch(`/api/brightness/${deviceId}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ value: p.brightness })
+                            });
+                            await fetch(`/api/colortemp/${deviceId}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ value: p.color_temp })
+                            });
+                        } catch(e) {
+                            console.error("Preset error", e);
+                        }
+                    }
+                });
+                
+                list.appendChild(btn);
+            });
+        });
+    } catch(e) {
+        console.error("Failed to fetch presets", e);
+    }
+}
+
 setInterval(() => {
     fetchAllStatus();
     fetchAutomations();
@@ -503,6 +830,7 @@ setInterval(() => {
 // Initial fetch
 fetchAllStatus();
 fetchAutomations();
+fetchPresets();
 
 // Bind wheel scrolling for number inputs
 const numberInputs = document.querySelectorAll('.apple-input[type="number"]');
