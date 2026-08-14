@@ -34,17 +34,51 @@ try:
 except Exception as e:
     raise ValueError(f"Failed to read devices.json config file: {e}")
 
+TIMER_SETTINGS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'timer_settings.json')
+
+def load_timer_settings():
+    if not os.path.exists(TIMER_SETTINGS_FILE):
+        example_file = TIMER_SETTINGS_FILE.replace('timer_settings.json', 'timer_settings.example.json')
+        try:
+            with open(example_file, 'r', encoding='utf-8') as f:
+                default_settings = json.load(f)
+        except Exception:
+            default_settings = {}
+        save_timer_settings(default_settings)
+        return default_settings
+    try:
+        with open(TIMER_SETTINGS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def save_timer_settings(settings):
+    try:
+        with open(TIMER_SETTINGS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, indent=4)
+    except Exception as e:
+        logging.error(f"Failed to save timer_settings.json: {e}")
+
 managers = {}
 schedulers = {}
+
+initial_timer_settings = load_timer_settings()
 
 for dev in devices_config:
     dev_id = dev['id']
     managers[dev_id] = LightManager(dev['ip'], dev['token'], dev.get('name', 'Unknown Light'))
-    schedulers[dev_id] = LightScheduler(managers[dev_id])
+    timer_mins = int(initial_timer_settings.get(dev_id, 15))
+    schedulers[dev_id] = LightScheduler(managers[dev_id], timer_mins=timer_mins)
 
 @app.route('/')
 def index():
-    return render_template('index.html', devices=devices_config)
+    current_settings = load_timer_settings()
+    devices_for_template = []
+    for dev in devices_config:
+        d = dict(dev)
+        d['timer_mins'] = current_settings.get(dev['id'], 15)
+        devices_for_template.append(d)
+    return render_template('index.html', devices=devices_for_template)
 
 @app.route('/service-worker.js')
 def serve_sw():
@@ -189,11 +223,21 @@ def handle_timer(device_id):
         return jsonify({'success': False, 'error': 'Device not found'})
     scheduler = schedulers[device_id]
     if request.method == 'POST':
-        data = request.json
-        if data.get('action') == 'start':
-            mins = int(data.get('minutes', 15))
+        data = request.json or {}
+        action = data.get('action')
+        if action == 'start':
+            mins = max(1, min(120, int(data.get('minutes', scheduler.timer_duration_mins))))
             scheduler.start_timer(mins)
-        elif data.get('action') == 'stop':
+            settings = load_timer_settings()
+            settings[device_id] = mins
+            save_timer_settings(settings)
+        elif action == 'set_duration':
+            mins = max(1, min(120, int(data.get('minutes', 15))))
+            scheduler.set_duration(mins)
+            settings = load_timer_settings()
+            settings[device_id] = mins
+            save_timer_settings(settings)
+        elif action == 'stop':
             scheduler.stop_timer()
         return jsonify({'success': True})
     else:

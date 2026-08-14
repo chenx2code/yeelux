@@ -472,9 +472,40 @@ deviceGroups.forEach(group => {
     const timerToggleBtn = group.querySelector('.timer-toggle-btn');
     const timerInput = group.querySelector('.timer-input');
     const timerStatus = group.querySelector('.timer-status');
+
+    let timerDebounceTimeout;
+    const saveTimerDurationToServer = (mins) => {
+        clearTimeout(timerDebounceTimeout);
+        timerDebounceTimeout = setTimeout(async () => {
+            try {
+                await fetch(`/api/timer/${deviceId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'set_duration', minutes: mins })
+                });
+            } catch (e) {
+                console.error("Failed to save timer duration to server", e);
+            }
+        }, 300);
+    };
+
+    if (timerInput) {
+        const handleTimerInputChange = (e) => {
+            const val = parseInt(e.target.value);
+            if (!isNaN(val) && val >= 1 && val <= 120) {
+                saveTimerDurationToServer(val);
+            }
+        };
+
+        timerInput.addEventListener('input', handleTimerInputChange);
+        timerInput.addEventListener('change', handleTimerInputChange);
+    }
+
     timerToggleBtn.addEventListener('click', () => {
         const isStarting = !timerToggleBtn.classList.contains('stop-btn');
         let mins = parseInt(timerInput.value) || 15;
+        if (mins < 1) mins = 1;
+        if (mins > 120) mins = 120;
         
         // Optimistic UI update for snappiness
         if (isStarting) {
@@ -620,6 +651,10 @@ async function fetchAutomations() {
             const timerStatus = group.querySelector('.timer-status');
             const timerToggleBtn = group.querySelector('.timer-toggle-btn');
             const timerInput = group.querySelector('.timer-input');
+
+            if (tData.timer_mins && timerInput && !timerInput.disabled && document.activeElement !== timerInput) {
+                timerInput.value = tData.timer_mins;
+            }
 
             if (tData.active) {
                 localState[deviceId].timerActive = true;
@@ -854,5 +889,7 @@ numberInputs.forEach(input => {
         if (!isNaN(max) && val > max) val = max;
         
         input.value = val;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
     }, { passive: false });
 });

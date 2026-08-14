@@ -3,12 +3,13 @@ import threading
 import logging
 
 class LightScheduler:
-    def __init__(self, light_manager):
+    def __init__(self, light_manager, timer_mins=15):
         self.light = light_manager
         
         # Timer (Sleep Timer) State
         self.timer_active = False
         self.timer_end_time = 0
+        self.timer_duration_mins = timer_mins
         
         # Focus Mode (Pomodoro) State
         self.focus_active = False
@@ -28,6 +29,7 @@ class LightScheduler:
 
     def start_timer(self, minutes):
         self.timer_active = True
+        self.timer_duration_mins = minutes
         self.timer_end_time = time.time() + (minutes * 60)
         logging.info(f"[{self.light.name}] Sleep timer started: turning off in {minutes} minutes")
 
@@ -35,13 +37,16 @@ class LightScheduler:
         self.timer_active = False
         logging.info(f"[{self.light.name}] Sleep timer stopped")
 
+    def set_duration(self, minutes):
+        self.timer_duration_mins = minutes
+
     def get_timer_status(self):
         if not self.timer_active:
-            return {'active': False, 'remaining_seconds': 0}
+            return {'active': False, 'remaining_seconds': 0, 'timer_mins': self.timer_duration_mins}
         rem = int(self.timer_end_time - time.time())
         if rem <= 0:
-            return {'active': False, 'remaining_seconds': 0}
-        return {'active': True, 'remaining_seconds': rem}
+            return {'active': False, 'remaining_seconds': 0, 'timer_mins': self.timer_duration_mins}
+        return {'active': True, 'remaining_seconds': rem, 'timer_mins': self.timer_duration_mins}
 
     def start_focus(self, work_mins=45, rest_mins=10, rest_action='dim', rest_brightness=5, rest_color_temp=2700):
         # Save current light state before starting focus
