@@ -20,6 +20,8 @@ services:
     # --------------------------------------------
 
     volumes:
-      # Ensure you have copied 'devices.example.json' and renamed it to 'devices.json' before running
+      # Ensure you have copied 'devices.example.json' to 'devices.json' before running
       - ./devices.json:/app/devices.json
+      - ./quick_modes.json:/app/quick_modes.json
+      - ./timer_settings.json:/app/timer_settings.json
       - ./.env:/app/.env
