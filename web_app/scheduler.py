@@ -96,7 +96,9 @@ class LightScheduler:
             if self.timer_active and now >= self.timer_end_time:
                 logging.info(f"[{self.light.name}] Timer ended, turning off light")
                 self.light.turn_off()
-                self.timer_active = False
+                # Check if user re-activated timer during turn_off network call
+                if now >= self.timer_end_time:
+                    self.timer_active = False
             
             # Process Focus Mode
             if self.focus_active:
@@ -107,6 +109,11 @@ class LightScheduler:
                             logging.info(f"[{self.light.name}] Focus period ended, preparing to rest")
                             self.light.blink(2)
                             time.sleep(1) # wait for blink to finish
+                            
+                            # Check if user canceled or modified focus mode during blink
+                            if not self.focus_active or self.focus_state != 'working':
+                                continue
+
                             # Enter rest mode
                             if self.focus_rest_action == 'off':
                                 self.light.turn_off()
@@ -114,23 +121,35 @@ class LightScheduler:
                                 self.light.set_brightness(self.focus_rest_brightness)
                                 self.light.set_color_temp(self.focus_rest_color_temp)
                             
-                            self.focus_state = 'resting'
-                            self.focus_end_time = time.time() + self.focus_rest_duration
+                            # Final check before committing state
+                            if self.focus_active:
+                                self.focus_state = 'resting'
+                                self.focus_end_time = time.time() + self.focus_rest_duration
                             
                         elif self.focus_state == 'resting':
                             # Rest period ended, start working
                             logging.info(f"[{self.light.name}] Rest period ended, preparing to work")
                             self.light.blink(2)
                             time.sleep(1)
+                            
+                            # Check if user canceled or modified focus mode during blink
+                            if not self.focus_active or self.focus_state != 'resting':
+                                continue
+
                             # Restore working brightness and color temperature
                             if self.focus_rest_action == 'off':
                                 self.light.turn_on()
                                 time.sleep(0.5)
+                                if not self.focus_active or self.focus_state != 'resting':
+                                    continue
+                            
                             self.light.set_brightness(self.focus_saved_brightness)
                             self.light.set_color_temp(self.focus_saved_ct)
                             
-                            self.focus_state = 'working'
-                            self.focus_end_time = time.time() + self.focus_work_duration
+                            # Final check before committing state
+                            if self.focus_active:
+                                self.focus_state = 'working'
+                                self.focus_end_time = time.time() + self.focus_work_duration
                     except Exception as e:
                         logging.error(f"[{self.light.name}] Failed to transition focus state: {e}")
             

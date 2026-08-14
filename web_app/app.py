@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import logging
+import tempfile
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, render_template, send_from_directory
 import uuid
@@ -54,8 +55,11 @@ def load_timer_settings():
 
 def save_timer_settings(settings):
     try:
-        with open(TIMER_SETTINGS_FILE, 'w', encoding='utf-8') as f:
+        dir_name = os.path.dirname(TIMER_SETTINGS_FILE)
+        fd, temp_path = tempfile.mkstemp(dir=dir_name, prefix='timer_settings_', suffix='.tmp')
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
             json.dump(settings, f, indent=4)
+        os.replace(temp_path, TIMER_SETTINGS_FILE)
     except Exception as e:
         logging.error(f"Failed to save timer_settings.json: {e}")
 
@@ -166,8 +170,14 @@ def load_presets():
         return []
 
 def save_presets(presets):
-    with open(QUICK_MODES_FILE, 'w', encoding='utf-8') as f:
-        json.dump(presets, f, indent=4)
+    try:
+        dir_name = os.path.dirname(QUICK_MODES_FILE)
+        fd, temp_path = tempfile.mkstemp(dir=dir_name, prefix='quick_modes_', suffix='.tmp')
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            json.dump(presets, f, indent=4)
+        os.replace(temp_path, QUICK_MODES_FILE)
+    except Exception as e:
+        logging.error(f"Failed to save quick_modes.json: {e}")
 
 @app.route('/api/presets', methods=['GET'])
 def get_presets():
