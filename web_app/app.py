@@ -6,6 +6,8 @@ import tempfile
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, render_template, send_from_directory
 import uuid
+import threading
+import time
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -74,6 +76,38 @@ for dev in devices_config:
     timer_mins = int(initial_timer_settings.get(dev_id, 15))
     schedulers[dev_id] = LightScheduler(managers[dev_id], timer_mins=timer_mins)
 
+status_cache = {}
+
+def poll_device_status():
+    # Initial quick poll
+    for dev_id, light in managers.items():
+        status = light.get_status()
+        if status:
+            status_cache[dev_id] = {
+                'success': True,
+                'is_on': status.is_on,
+                'brightness': status.brightness,
+                'color_temp': status.color_temp if hasattr(status, 'color_temp') else 4000
+            }
+        else:
+            status_cache[dev_id] = {'success': False, 'error': 'Disconnected'}
+            
+    while True:
+        time.sleep(2)
+        for dev_id, light in managers.items():
+            status = light.get_status()
+            if status:
+                status_cache[dev_id] = {
+                    'success': True,
+                    'is_on': status.is_on,
+                    'brightness': status.brightness,
+                    'color_temp': status.color_temp if hasattr(status, 'color_temp') else 4000
+                }
+            else:
+                status_cache[dev_id] = {'success': False, 'error': 'Disconnected'}
+
+threading.Thread(target=poll_device_status, daemon=True).start()
+
 @app.route('/')
 def index():
     current_settings = load_timer_settings()
@@ -98,40 +132,29 @@ def serve_favicon():
 
 @app.route('/api/status/all', methods=['GET'])
 def get_all_status():
-    result = {}
-    for dev_id, light in managers.items():
-        status = light.get_status()
-        if status:
-            result[dev_id] = {
-                'success': True,
-                'is_on': status.is_on,
-                'brightness': status.brightness,
-                'color_temp': status.color_temp if hasattr(status, 'color_temp') else 4000
-            }
-        else:
-            result[dev_id] = {'success': False, 'error': 'Disconnected'}
-    return jsonify(result)
+    return jsonify(status_cache)
 
 @app.route('/api/status/<device_id>', methods=['GET'])
 def get_status(device_id):
     if device_id not in managers:
         return jsonify({'success': False, 'error': 'Device not found'})
-    status = managers[device_id].get_status()
-    if status:
-        return jsonify({
-            'success': True,
-            'is_on': status.is_on,
-            'brightness': status.brightness,
-            'color_temp': status.color_temp if hasattr(status, 'color_temp') else 4000
-        })
-    return jsonify({'success': False, 'error': 'Disconnected'})
+    return jsonify(status_cache.get(device_id, {'success': False, 'error': 'Disconnected'}))
 
 @app.route('/api/toggle/<device_id>', methods=['POST'])
 def toggle(device_id):
     if device_id not in managers:
         return jsonify({'success': False, 'error': 'Device not found'})
     managers[device_id].toggle()
-    return get_status(device_id)
+    
+    status = managers[device_id].get_status()
+    if status:
+        status_cache[device_id] = {
+            'success': True,
+            'is_on': status.is_on,
+            'brightness': status.brightness,
+            'color_temp': status.color_temp if hasattr(status, 'color_temp') else 4000
+        }
+    return jsonify(status_cache.get(device_id, {'success': False, 'error': 'Disconnected'}))
 
 @app.route('/api/brightness/<device_id>', methods=['POST'])
 def set_brightness(device_id):
@@ -140,6 +163,10 @@ def set_brightness(device_id):
     data = request.json
     val = data.get('value', 50)
     managers[device_id].set_brightness(int(val))
+    
+    if device_id in status_cache and status_cache[device_id].get('success'):
+        status_cache[device_id]['brightness'] = int(val)
+        
     return jsonify({'success': True})
 
 @app.route('/api/colortemp/<device_id>', methods=['POST'])
@@ -149,6 +176,10 @@ def set_colortemp(device_id):
     data = request.json
     val = data.get('value', 4000)
     managers[device_id].set_color_temp(int(val))
+    
+    if device_id in status_cache and status_cache[device_id].get('success'):
+        status_cache[device_id]['color_temp'] = int(val)
+        
     return jsonify({'success': True})
 
 QUICK_MODES_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'quick_modes.json')
