@@ -151,14 +151,17 @@ def toggle(device_id):
     managers[device_id].toggle()
     last_action_time[device_id] = time.time()
     
-    status = managers[device_id].get_status()
-    if status:
-        status_cache[device_id] = {
-            'success': True,
-            'is_on': status.is_on,
-            'brightness': status.brightness,
-            'color_temp': status.color_temp if hasattr(status, 'color_temp') else 4000
-        }
+    if device_id in status_cache and status_cache[device_id].get('success'):
+        status_cache[device_id]['is_on'] = not status_cache[device_id]['is_on']
+    else:
+        status = managers[device_id].get_status()
+        if status:
+            status_cache[device_id] = {
+                'success': True,
+                'is_on': status.is_on,
+                'brightness': status.brightness,
+                'color_temp': status.color_temp if hasattr(status, 'color_temp') else 4000
+            }
     return jsonify(status_cache.get(device_id, {'success': False, 'error': 'Disconnected'}))
 
 @app.route('/api/brightness/<device_id>', methods=['POST'])
