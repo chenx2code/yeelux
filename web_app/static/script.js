@@ -332,13 +332,19 @@ deviceGroups.forEach(group => {
         }
         
         try {
-            const res = await fetch(`/api/toggle/${deviceId}`, { method: 'POST' });
-            const data = await res.json();
-            updateUI(group, data);
+            await fetch(`/api/toggle/${deviceId}`, { method: 'POST' });
         } catch (e) {
-            setOffline(group);
+            // Revert on failure
+            toggleBtn.checked = !toggleBtn.checked;
+            if (toggleBtn.checked) {
+                iconContainer.classList.add('active');
+                statusBadge.textContent = translations[currentLang].on;
+            } else {
+                iconContainer.classList.remove('active');
+                statusBadge.textContent = translations[currentLang].off;
+            }
         } finally {
-            setTimeout(() => { isUpdating = false; }, 500);
+            setTimeout(() => { isUpdating = false; }, 2000);
         }
     });
 
