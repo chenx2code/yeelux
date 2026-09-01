@@ -322,6 +322,7 @@ deviceGroups.forEach(group => {
     const statusBadge = group.querySelector('.connection-status');
     
     toggleBtn.addEventListener('change', async () => {
+        isUpdating = true;
         if (toggleBtn.checked) {
             iconContainer.classList.add('active');
             statusBadge.textContent = translations[currentLang].on;
@@ -336,6 +337,8 @@ deviceGroups.forEach(group => {
             updateUI(group, data);
         } catch (e) {
             setOffline(group);
+        } finally {
+            setTimeout(() => { isUpdating = false; }, 500);
         }
     });
 
