@@ -1,6 +1,8 @@
 const deviceGroups = document.querySelectorAll('.device-group');
 
-let isUpdating = false;
+
+// Per-device cooldown to prevent polling from overwriting optimistic UI updates
+const deviceActionCooldown = {};
 
 // i18n Translations
 const translations = {
@@ -230,7 +232,6 @@ dashboardCards.forEach(card => observer.observe(card));
 
 // Poll all statuses
 async function fetchAllStatus() {
-    if (isUpdating) return;
     try {
         const res = await fetch('/api/status/all');
         const data = await res.json();
@@ -249,6 +250,7 @@ async function fetchAllStatus() {
 }
 
 function updateUI(group, data) {
+    const deviceId = group.dataset.deviceId;
     const toggleBtn = group.querySelector('.toggle-btn');
     const iconContainer = group.querySelector('.light-icon');
     const statusBadge = group.querySelector('.connection-status');
@@ -259,6 +261,12 @@ function updateUI(group, data) {
 
     if (!data.success) {
         setOffline(group);
+        return;
+    }
+    
+    // Skip ALL UI updates if this device is in cooldown
+    const cooldownUntil = deviceActionCooldown[deviceId] || 0;
+    if (Date.now() < cooldownUntil) {
         return;
     }
     
@@ -288,10 +296,11 @@ function setOffline(group) {
 
 function debounceSlider(group, element, valElement, suffix, apiEndpoint) {
     let timeout;
+    const deviceId = group.dataset.deviceId;
     element.addEventListener('input', (e) => {
         valElement.textContent = e.target.value + suffix;
-        group.dataset.isUpdating = "true";
-        isUpdating = true;
+        // Set per-device cooldown while dragging
+        deviceActionCooldown[deviceId] = Date.now() + 3000;
     });
     
     element.addEventListener('change', (e) => {
@@ -306,10 +315,8 @@ function debounceSlider(group, element, valElement, suffix, apiEndpoint) {
             } catch(e) {
                 console.error(e);
             }
-            setTimeout(() => { 
-                group.dataset.isUpdating = "";
-                isUpdating = false; 
-            }, 500);
+            // Extend cooldown after request completes
+            deviceActionCooldown[deviceId] = Date.now() + 2000;
         }, 100);
     });
 }
@@ -322,7 +329,9 @@ deviceGroups.forEach(group => {
     const statusBadge = group.querySelector('.connection-status');
     
     toggleBtn.addEventListener('change', async () => {
-        isUpdating = true;
+        // Set per-device cooldown (5 seconds from now)
+        deviceActionCooldown[deviceId] = Date.now() + 5000;
+        
         if (toggleBtn.checked) {
             iconContainer.classList.add('active');
             statusBadge.textContent = translations[currentLang].on;
@@ -343,8 +352,7 @@ deviceGroups.forEach(group => {
                 iconContainer.classList.remove('active');
                 statusBadge.textContent = translations[currentLang].off;
             }
-        } finally {
-            setTimeout(() => { isUpdating = false; }, 2000);
+            deviceActionCooldown[deviceId] = 0;
         }
     });
 
@@ -808,6 +816,9 @@ async function fetchPresets() {
                         const brightnessVal = group.querySelector('.brightness-val');
                         const ctSlider = group.querySelector('.ct-slider');
                         const ctVal = group.querySelector('.ct-val');
+                        
+                        // Set per-device cooldown (5 seconds)
+                        deviceActionCooldown[deviceId] = Date.now() + 5000;
                         
                         if (brightnessSlider && brightnessVal) {
                             brightnessSlider.value = p.brightness;
