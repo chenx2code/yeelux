@@ -96,10 +96,10 @@ def poll_device_status():
     while True:
         time.sleep(2)
         for dev_id, light in managers.items():
-            status = light.get_status()
-            # Prevent overwriting cache if a user action happened in the last 3 seconds
+            # Skip polling if a user action happened in the last 3 seconds
             if time.time() - last_action_time.get(dev_id, 0) < 3:
                 continue
+            status = light.get_status()
             if status:
                 status_cache[dev_id] = {
                     'success': True,
@@ -148,20 +148,14 @@ def get_status(device_id):
 def toggle(device_id):
     if device_id not in managers:
         return jsonify({'success': False, 'error': 'Device not found'})
-    managers[device_id].toggle()
-    last_action_time[device_id] = time.time()
     
+    # Optimistically flip cache state FIRST
     if device_id in status_cache and status_cache[device_id].get('success'):
         status_cache[device_id]['is_on'] = not status_cache[device_id]['is_on']
-    else:
-        status = managers[device_id].get_status()
-        if status:
-            status_cache[device_id] = {
-                'success': True,
-                'is_on': status.is_on,
-                'brightness': status.brightness,
-                'color_temp': status.color_temp if hasattr(status, 'color_temp') else 4000
-            }
+    
+    last_action_time[device_id] = time.time()
+    managers[device_id].toggle()
+    
     return jsonify(status_cache.get(device_id, {'success': False, 'error': 'Disconnected'}))
 
 @app.route('/api/brightness/<device_id>', methods=['POST'])
