@@ -837,7 +837,7 @@ async function fetchPresets() {
 setInterval(() => {
     fetchAllStatus();
     fetchAutomations();
-}, 3000);
+}, 1000);
 
 // Local 1-second tick to update UI countdowns smoothly
 setInterval(() => {
