@@ -77,6 +77,7 @@ for dev in devices_config:
     schedulers[dev_id] = LightScheduler(managers[dev_id], timer_mins=timer_mins)
 
 status_cache = {}
+last_action_time = {}
 
 def poll_device_status():
     # Initial quick poll
@@ -96,6 +97,9 @@ def poll_device_status():
         time.sleep(2)
         for dev_id, light in managers.items():
             status = light.get_status()
+            # Prevent overwriting cache if a user action happened in the last 3 seconds
+            if time.time() - last_action_time.get(dev_id, 0) < 3:
+                continue
             if status:
                 status_cache[dev_id] = {
                     'success': True,
@@ -145,6 +149,7 @@ def toggle(device_id):
     if device_id not in managers:
         return jsonify({'success': False, 'error': 'Device not found'})
     managers[device_id].toggle()
+    last_action_time[device_id] = time.time()
     
     status = managers[device_id].get_status()
     if status:
@@ -163,6 +168,7 @@ def set_brightness(device_id):
     data = request.json
     val = data.get('value', 50)
     managers[device_id].set_brightness(int(val))
+    last_action_time[device_id] = time.time()
     
     if device_id in status_cache and status_cache[device_id].get('success'):
         status_cache[device_id]['brightness'] = int(val)
@@ -176,6 +182,7 @@ def set_colortemp(device_id):
     data = request.json
     val = data.get('value', 4000)
     managers[device_id].set_color_temp(int(val))
+    last_action_time[device_id] = time.time()
     
     if device_id in status_cache and status_cache[device_id].get('success'):
         status_cache[device_id]['color_temp'] = int(val)
