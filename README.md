@@ -6,8 +6,13 @@ This is an open-source Local Area Network (LAN) control panel designed specifica
 It requires no public internet connection or official apps, communicating directly with devices on your local network with millisecond-level response latency.
 
 ## 1. Features
-- ⏱️ **Sleep Timer**: One-click countdown timer to automatically turn off the light.
+- ⚡ **Quick Modes / Presets**: 
+  - **One-Tap Lighting Presets**: Visual bubbles dynamically rendered with realistic color temperature tints (from warm candlelight to cool white), switching brightness and color temp with a single tap.
+  - **Fully Customizable & Persistent**: Expand the editor to add, edit, or delete presets with custom names and sliders. Presets are saved locally.
 - 🍅 **Pomodoro / Focus Mode**: Customize work and rest durations. When a work session ends, the light will blink to notify you and automatically switch to an eye-protection dim and warm mode. When the rest session ends, it blinks again and restores the bright working light.
+- ⏱️ **Sleep Timer (with Restore Work Mode)**: 
+  - One-click countdown timer to automatically turn off the light.
+  - **Restore Work Mode on Next Turn-on** (toggleable): Resolves the common annoyance where a desk lamp dimmed for sleep remains dim when turned on via the physical knob the next morning. When enabled, after the sleep timer shuts off the lamp, the next power-on event (whether from the physical switch or the Web UI) will smoothly transition (500ms) to your configured Work preset (default: 100% brightness, 4200K, customizable via Quick Modes) within 2 seconds. Regular manual toggles and adjustments remain completely native and unaffected.
 
 ## 2. Compatibility
 Thanks to the underlying `python-miio` universal protocol library, this project is theoretically compatible with the vast majority of Yeelight products that support "LAN Control".
