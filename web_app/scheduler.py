@@ -3,13 +3,15 @@ import threading
 import logging
 
 class LightScheduler:
-    def __init__(self, light_manager, timer_mins=15):
+    def __init__(self, light_manager, timer_mins=15, restore_work_mode=True, on_timer_end=None):
         self.light = light_manager
         
         # Timer (Sleep Timer) State
         self.timer_active = False
         self.timer_end_time = 0
         self.timer_duration_mins = timer_mins
+        self.restore_work_mode = restore_work_mode
+        self.on_timer_end = on_timer_end
         
         # Focus Mode (Pomodoro) State
         self.focus_active = False
@@ -40,13 +42,16 @@ class LightScheduler:
     def set_duration(self, minutes):
         self.timer_duration_mins = minutes
 
+    def set_restore_work_mode(self, enabled: bool):
+        self.restore_work_mode = bool(enabled)
+
     def get_timer_status(self):
         if not self.timer_active:
-            return {'active': False, 'remaining_seconds': 0, 'timer_mins': self.timer_duration_mins}
+            return {'active': False, 'remaining_seconds': 0, 'timer_mins': self.timer_duration_mins, 'restore_work_mode': self.restore_work_mode}
         rem = int(self.timer_end_time - time.time())
         if rem <= 0:
-            return {'active': False, 'remaining_seconds': 0, 'timer_mins': self.timer_duration_mins}
-        return {'active': True, 'remaining_seconds': rem, 'timer_mins': self.timer_duration_mins}
+            return {'active': False, 'remaining_seconds': 0, 'timer_mins': self.timer_duration_mins, 'restore_work_mode': self.restore_work_mode}
+        return {'active': True, 'remaining_seconds': rem, 'timer_mins': self.timer_duration_mins, 'restore_work_mode': self.restore_work_mode}
 
     def start_focus(self, work_mins=45, rest_mins=10, rest_action='dim', rest_brightness=5, rest_color_temp=2700):
         # Save current light state before starting focus
@@ -99,6 +104,11 @@ class LightScheduler:
                 # Check if user re-activated timer during turn_off network call
                 if now >= self.timer_end_time:
                     self.timer_active = False
+                    if self.restore_work_mode and self.on_timer_end:
+                        try:
+                            self.on_timer_end()
+                        except Exception as e:
+                            logging.error(f"[{self.light.name}] Error in on_timer_end callback: {e}")
             
             # Process Focus Mode
             if self.focus_active:

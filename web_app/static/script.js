@@ -34,7 +34,8 @@ const translations = {
         save: "Save",
         saved: "Saved",
         delete: "Delete",
-        preset_new: "New Preset"
+        preset_new: "New Preset",
+        restore_work_mode: "Restore Work Mode on Next Turn-on"
     },
     zh: {
         connecting: "正在连接...",
@@ -64,7 +65,8 @@ const translations = {
         save: "保存",
         saved: "已保存",
         delete: "删除",
-        preset_new: "新预设"
+        preset_new: "新预设",
+        restore_work_mode: "开灯恢复工作模式"
     }
 };
 
@@ -489,6 +491,7 @@ deviceGroups.forEach(group => {
     const timerToggleBtn = group.querySelector('.timer-toggle-btn');
     const timerInput = group.querySelector('.timer-input');
     const timerStatus = group.querySelector('.timer-status');
+    const timerRestoreToggle = group.querySelector('.timer-restore-toggle');
 
     let timerDebounceTimeout;
     const saveTimerDurationToServer = (mins) => {
@@ -516,6 +519,21 @@ deviceGroups.forEach(group => {
 
         timerInput.addEventListener('input', handleTimerInputChange);
         timerInput.addEventListener('change', handleTimerInputChange);
+    }
+
+    if (timerRestoreToggle) {
+        timerRestoreToggle.addEventListener('change', async (e) => {
+            const isChecked = e.target.checked;
+            try {
+                await fetch(`/api/timer/${deviceId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'set_restore_work_mode', enabled: isChecked })
+                });
+            } catch (err) {
+                console.error("Failed to update restore work mode setting", err);
+            }
+        });
     }
 
     timerToggleBtn.addEventListener('click', () => {
@@ -671,6 +689,11 @@ async function fetchAutomations() {
 
             if (tData.timer_mins && timerInput && !timerInput.disabled && document.activeElement !== timerInput) {
                 timerInput.value = tData.timer_mins;
+            }
+
+            const timerRestoreToggle = group.querySelector('.timer-restore-toggle');
+            if (timerRestoreToggle && tData.restore_work_mode !== undefined && document.activeElement !== timerRestoreToggle) {
+                timerRestoreToggle.checked = !!tData.restore_work_mode;
             }
 
             if (tData.active) {
