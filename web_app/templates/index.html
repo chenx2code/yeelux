@@ -269,6 +269,13 @@
                             <label data-i18n="timer_mins">Timer (mins)</label>
                             <input type="number" class="timer-input apple-input" value="{{ device.timer_mins or 15 }}" min="1" max="120">
                         </div>
+                        <div class="input-row">
+                            <label data-i18n="restore_work_mode">开灯恢复工作模式</label>
+                            <label class="apple-switch" style="transform: scale(0.85); transform-origin: right center;">
+                                <input type="checkbox" class="timer-restore-toggle" {% if device.restore_work_mode %}checked{% endif %}>
+                                <span class="switch-track"></span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </div>

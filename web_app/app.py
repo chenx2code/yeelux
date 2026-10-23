@@ -39,6 +39,18 @@ except Exception as e:
 
 TIMER_SETTINGS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'timer_settings.json')
 
+def get_device_timer_config(settings, dev_id):
+    val = settings.get(dev_id, 15)
+    if isinstance(val, dict):
+        mins = int(val.get('minutes', 15))
+        restore = bool(val.get('restore_work_mode', True))
+        pending = bool(val.get('pending_restore', False))
+    else:
+        mins = int(val) if val else 15
+        restore = True
+        pending = False
+    return {'minutes': mins, 'restore_work_mode': restore, 'pending_restore': pending}
+
 def load_timer_settings():
     if not os.path.exists(TIMER_SETTINGS_FILE):
         example_file = TIMER_SETTINGS_FILE.replace('timer_settings.json', 'timer_settings.example.json')
@@ -70,20 +82,37 @@ schedulers = {}
 
 initial_timer_settings = load_timer_settings()
 
+def make_on_timer_end(d_id):
+    def callback():
+        settings = load_timer_settings()
+        cfg = get_device_timer_config(settings, d_id)
+        cfg['pending_restore'] = True
+        settings[d_id] = cfg
+        save_timer_settings(settings)
+        logging.info(f"[{d_id}] Sleep timer ended: pending_restore set to True in timer_settings.json")
+    return callback
+
 for dev in devices_config:
     dev_id = dev['id']
     managers[dev_id] = LightManager(dev['ip'], dev['token'], dev.get('name', 'Unknown Light'))
-    timer_mins = int(initial_timer_settings.get(dev_id, 15))
-    schedulers[dev_id] = LightScheduler(managers[dev_id], timer_mins=timer_mins)
+    cfg = get_device_timer_config(initial_timer_settings, dev_id)
+    schedulers[dev_id] = LightScheduler(
+        managers[dev_id],
+        timer_mins=cfg['minutes'],
+        restore_work_mode=cfg['restore_work_mode'],
+        on_timer_end=make_on_timer_end(dev_id)
+    )
 
 status_cache = {}
 last_action_time = {}
+last_power_state = {}
 
 def poll_device_status():
     # Initial quick poll
     for dev_id, light in managers.items():
         status = light.get_status()
         if status:
+            last_power_state[dev_id] = status.is_on
             status_cache[dev_id] = {
                 'success': True,
                 'is_on': status.is_on,
@@ -91,6 +120,7 @@ def poll_device_status():
                 'color_temp': status.color_temp if hasattr(status, 'color_temp') else 4000
             }
         else:
+            last_power_state[dev_id] = False
             status_cache[dev_id] = {'success': False, 'error': 'Disconnected'}
             
     while True:
@@ -101,6 +131,36 @@ def poll_device_status():
                 continue
             status = light.get_status()
             if status:
+                was_on = last_power_state.get(dev_id, None)
+                is_on = status.is_on
+                last_power_state[dev_id] = is_on
+                
+                # Check for physical or external power-on event
+                if was_on is False and is_on is True:
+                    settings = load_timer_settings()
+                    cfg = get_device_timer_config(settings, dev_id)
+                    if cfg.get('pending_restore'):
+                        logging.info(f"[{dev_id}] Detected lamp turned ON with pending restore. Applying work mode...")
+                        try:
+                            presets = load_presets()
+                            work_preset = next((p for p in presets if p.get('name', '').strip().lower() in ['work', '工作']), None)
+                            if not work_preset and presets:
+                                work_preset = presets[0]
+                            target_brightness = int(work_preset.get('brightness', 100)) if work_preset else 100
+                            target_ct = int(work_preset.get('color_temp', 4200)) if work_preset else 4200
+                            
+                            time.sleep(0.3)
+                            light.set_brightness(target_brightness, transition=500)
+                            light.set_color_temp(target_ct, transition=500)
+                            status.brightness = target_brightness
+                            status.color_temp = target_ct
+                        except Exception as ex:
+                            logging.error(f"[{dev_id}] Failed to restore work mode on turn-on: {ex}")
+                        finally:
+                            cfg['pending_restore'] = False
+                            settings[dev_id] = cfg
+                            save_timer_settings(settings)
+
                 status_cache[dev_id] = {
                     'success': True,
                     'is_on': status.is_on,
@@ -108,6 +168,7 @@ def poll_device_status():
                     'color_temp': status.color_temp if hasattr(status, 'color_temp') else 4000
                 }
             else:
+                last_power_state[dev_id] = False
                 status_cache[dev_id] = {'success': False, 'error': 'Disconnected'}
 
 threading.Thread(target=poll_device_status, daemon=True).start()
@@ -118,7 +179,9 @@ def index():
     devices_for_template = []
     for dev in devices_config:
         d = dict(dev)
-        d['timer_mins'] = current_settings.get(dev['id'], 15)
+        cfg = get_device_timer_config(current_settings, dev['id'])
+        d['timer_mins'] = cfg['minutes']
+        d['restore_work_mode'] = cfg['restore_work_mode']
         devices_for_template.append(d)
     return render_template('index.html', devices=devices_for_template)
 
@@ -270,21 +333,29 @@ def handle_timer(device_id):
     if request.method == 'POST':
         data = request.json or {}
         action = data.get('action')
+        settings = load_timer_settings()
+        cfg = get_device_timer_config(settings, device_id)
         if action == 'start':
             mins = max(1, min(120, int(data.get('minutes', scheduler.timer_duration_mins))))
             scheduler.start_timer(mins)
-            settings = load_timer_settings()
-            settings[device_id] = mins
+            cfg['minutes'] = mins
+            settings[device_id] = cfg
             save_timer_settings(settings)
         elif action == 'set_duration':
             mins = max(1, min(120, int(data.get('minutes', 15))))
             scheduler.set_duration(mins)
-            settings = load_timer_settings()
-            settings[device_id] = mins
+            cfg['minutes'] = mins
+            settings[device_id] = cfg
+            save_timer_settings(settings)
+        elif action == 'set_restore_work_mode':
+            enabled = bool(data.get('enabled', True))
+            scheduler.set_restore_work_mode(enabled)
+            cfg['restore_work_mode'] = enabled
+            settings[device_id] = cfg
             save_timer_settings(settings)
         elif action == 'stop':
             scheduler.stop_timer()
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'status': scheduler.get_timer_status()})
     else:
         return jsonify(scheduler.get_timer_status())
 

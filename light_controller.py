@@ -81,12 +81,12 @@ class LightManager:
             else:
                 self.turn_on()
 
-    def set_brightness(self, level: int):
+    def set_brightness(self, level: int, transition: int = 500):
         if self._ensure_connected():
             try:
                 level = max(1, min(100, level))
-                self.light.set_brightness(level)
-                logging.info(f"[{self.name}] Light brightness set to {level}%")
+                self.light.set_brightness(level, transition=transition)
+                logging.info(f"[{self.name}] Light brightness set to {level}% (transition={transition}ms)")
                 return True
             except Exception as e:
                 logging.error(f"[{self.name}] Failed to set light brightness: {e}")
@@ -94,12 +94,12 @@ class LightManager:
                 return False
         return False
 
-    def set_color_temp(self, level: int):
+    def set_color_temp(self, level: int, transition: int = 500):
         if self._ensure_connected():
             try:
                 level = max(2600, min(5000, level))
-                self.light.set_color_temp(level)
-                logging.info(f"[{self.name}] Light color temperature set to {level}K")
+                self.light.set_color_temp(level, transition=transition)
+                logging.info(f"[{self.name}] Light color temperature set to {level}K (transition={transition}ms)")
                 return True
             except Exception as e:
                 logging.error(f"[{self.name}] Failed to set light color temperature: {e}")
