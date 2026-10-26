@@ -1,6 +1,11 @@
-# YeeLux - Smart Light Controller
+<div align="center">
+  <img src="https://raw.githubusercontent.com/chenx2code/yeelux/master/web_app/static/images/icon-192.png" width="100" alt="YeeLux Logo" />
+  <h1>YeeLux</h1>
+  <p><b>Smart Light Controller for Yeelight & Mi Home</b></p>
+  <p><a href="README_zh.md">中文</a> · English</p>
+</div>
 
-[中文](README_zh.md) | English
+---
 
 This is an open-source Local Area Network (LAN) control panel designed specifically for **Yeelight (and Mi Home) smart lights**, built on top of `python-miio`.
 It requires no public internet connection or official apps, communicating directly with devices on your local network with millisecond-level response latency.
