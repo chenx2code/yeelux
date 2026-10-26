@@ -1,6 +1,10 @@
-# YeeLux - 智能灯具局域网中枢 (Smart Light Controller)
-
-中文 | [English](README.md)
+<div align="center">
+  <img src="https://raw.githubusercontent.com/chenx2code/yeelux/master/web_app/static/images/icon-192.png" width="100" alt="YeeLux Logo" />
+  <h1>YeeLux</h1>
+  <p><b>智能灯具局域网中枢 (Smart Light Controller)</b></p>
+  <p>中文 · <a href="README.md">English</a></p>
+</div>
+---
 
 这是一个基于 `python-miio` 开发，专为 **Yeelight（及米家）系列智能灯具** 打造的开源局域网控制面板。
 无需依赖公网连接或官方 App，完全在局域网内与设备直连通信，响应延迟在毫秒级别。
